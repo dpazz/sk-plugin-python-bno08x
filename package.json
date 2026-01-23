@@ -1,11 +1,16 @@
 {
-  "name": "sk-plugin-python-demo",
+  "name": "sk-plugin-python-bno08x",
   "version": "1.0.0",
-  "description": "Demo Signal K Node server plugin that uses Python",
+  "description": "Signal K Node server plugin for BNO08X IMUs family via Python",
   "main": "index.js",
   "keywords": [
-    "signalk-node-server-plugin"
+    "signalk-node-server-plugin",
+    "IMU",
+    "9DOF",
+    "attitude",
+    "BNO08X"
+
   ],
-  "author": "Teppo Kurki <teppo.kurki@iki.fi> (https://github.com/tkurki)",
-  "license": "Apache-2.0"
+  "author": "Daniele Pazzaglia <daniele.pazzaglia53@gmail.com> (https://github.com/dpazz)",
+  "license": "MIT"
 }
