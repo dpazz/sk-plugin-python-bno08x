@@ -43,6 +43,72 @@ from adafruit_bno08x.i2c import BNO08X_I2C
 
 from micropython import const
 
+_BNO08X_DEFAULT_ADDRESS = const(0x4A)
+_BNO08X_ALTERNATIVE_ADDRESS = const(0x4B)
+
+def scan_for_bno(i2c):
+
+    while not i2c.try_lock():
+      pass
+
+    # Scan and print results
+    #print("I2C Scanner")
+    devices = i2c.scan()
+    print("I2C devices found: ", [hex(i) for i in devices])
+    if _BNO08X_ALTERNATIVE_ADDRESS in devices:
+      address=_BNO08X_ALTERNATIVE_ADDRESS
+    elif _BNO08X_DEFAULT_ADDRESS in devices:
+      address=_BNO08X_DEFAULT_ADDRESS
+    else:
+      i2c.unlock # Anyway unlock the bus
+      raise ValueError("NO VALID BNO08X ADDRESS FOUND IN THE I2C BUS")
+
+    # Unlock the bus
+    i2c.unlock()
+    return address
+
+def find_attitude(dqw, dqx, dqy, dqz):
+    norm = sqrt(dqw * dqw + dqx * dqx + dqy * dqy + dqz * dqz)
+    dqw = dqw / norm
+    dqx = dqx / norm
+    dqy = dqy / norm
+    dqz = dqz / norm
+
+    ysqr = dqy * dqy
+    xsqr = dqx * dqx
+    zsqr = dqz * dqz
+
+    t0 = +2.0 * (dqw * dqx + dqy * dqz)
+    t1 = +1.0 - 2.0 * (xsqr + ysqr)
+    roll_raw = atan2(t0, t1)
+    roll = -roll_raw # report clockwise in radians from 0 to + or - pi
+
+    t2 = +2.0 * (dqw * dqy - dqz * dqx)
+    t2 = +1.0 if t2 > +1.0 else t2
+    t2 = -1.0 if t2 < -1.0 else t2
+    pitch_raw = asin(t2)
+    pitch = -pitch_raw # report clockwise in radians from 0 to + or - pi
+
+    t3 = +2.0 * (dqw * dqz + dqx * dqy)
+    t4 = +1.0 - 2.0 * (ysqr + zsqr)
+    yaw_raw = atan2(t3, t4)
+    if yaw_raw > 0:
+        yaw = 2*pi - yaw_raw
+    else:
+        yaw = abs(yaw_raw)
+    # heading in radians clockwise from 0 to 2*pi
+
+    return roll, pitch, yaw 
+
+i2c = busio.I2C(board.SCL, board.SDA)
+reset_pin = DigitalInOut(board.D7)
+#
+try:
+    addr = scan_for_bno(i2c)
+except ValueError as e:
+  print(e)
+#
+
 n = 0
 def outputSk():
     global n
