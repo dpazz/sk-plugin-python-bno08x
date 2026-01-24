@@ -1,5 +1,7 @@
 const { spawn } = require('child_process')
 
+const { execSync } = require('child_process')
+
 const schema = require('./schema')
 
 const pkgData = require('./package.json')
@@ -8,6 +10,7 @@ module.exports = function (app) {
   let child
  return {
     start: options => {
+      child = execSync('source .env/bin/activate') //set the python required virtual environment
       child = spawn('python', ['plugin.py'], { cwd: __dirname })
 
       child.stdout.on('data', data => {
