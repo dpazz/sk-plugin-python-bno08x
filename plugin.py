@@ -23,7 +23,7 @@ SOFTWARE.
 
 """
 
-import sys, json, threading, datetime, logging, time;
+import sys, json, datetime, logging, time;
 from math import atan2, asin, pi, sqrt
 
 import board
@@ -118,25 +118,26 @@ def skOutput(dev, path, value):
     sys.stdout.write(json.dumps(skData) + '\n')
 
 def sensorReportLoop(dev,rate, bno, dCfg):
+    while True:
+        if dCfg.delaycount == 0:
+            dCfg.delaycount = dCfg.delay
+            game_quat_i, game_quat_j, game_quat_k, game_quat_real = bno.game_quaternion
+            roll, pitch, yaw = find_attitude(game_quat_real, game_quat_i, game_quat_j, game_quat_k)
+            roll += dCfg.rollOffset * pi/180
+            pitch += dCfg.pitchOffset * pi/180
+            yaw += dCfg.hdgOffset * pi/180
+            skOutput(dev,'navigation.attitude.roll',roll)
+            skOutput(dev,'navigation.attitude.pitch',pitch)
+            skOutput(dev,'navigation.attitude.yaw',yaw)
+            #heading = round(yaw * 180/pi)
+            skOutput(dev,'navigation.headingMagnetic',yaw)
+            skOutput(dev,'navigation.headingCompass',yaw + dCfg.hdgDeviation * pi/180)
 
-    if dCfg.delaycount == 0:
-        dCfg.delaycount = dCfg.delay
-        game_quat_i, game_quat_j, game_quat_k, game_quat_real = bno.game_quaternion
-        roll, pitch, yaw = find_attitude(game_quat_real, game_quat_i, game_quat_j, game_quat_k)
-        roll += dCfg.rollOffset * pi/180
-        pitch += dCfg.pitchOffset * pi/180
-        yaw += dCfg.hdgOffset * pi/180
-        skOutput(dev,'navigation.attitude.roll',roll)
-        skOutput(dev,'navigation.attitude.pitch',pitch)
-        skOutput(dev,'navigation.attitude.yaw',yaw)
-        #heading = round(yaw * 180/pi)
-        skOutput(dev,'navigation.headingMagnetic',yaw)
-        skOutput(dev,'navigation.headingCompass',yaw + dCfg.hdgDeviation * pi/180)
-
-        sys.stdout.flush()
-    else:
-        dCfg.delaycount -= 1
-    threading.Timer(rate, sensorReportLoop, [dev, rate, bno, dCfg]).start()
+            sys.stdout.flush()
+        else:
+            dCfg.delaycount -= 1
+        time.sleep(rate)
+#    threading.Timer(rate, sensorReportLoop, [dev, rate, bno, dCfg]).start()]]
 
 def sensorCalibrate(dev, bno):
     bno.begin_calibration()
@@ -205,8 +206,9 @@ for options in config["imuDevices"]:
     else :
         bno.enable_feature(BNO_REPORT_MAGNETOMETER)
         bno.enable_feature(BNO_REPORT_GAME_ROTATION_VECTOR)
-    
-    threading.Timer(0.2, sensorReportLoop, [addr, rRate, bno, plgCfg]).start()
+#   threading.Timer(0.2, sensorReportLoop, [addr, rRate, bno, plgCfg]).start()
+    time.sleep(0.2)
+    sensorReportLoop (addr, rRate, bno, plgCfg)
         
 
 for line in iter(sys.stdin.readline, b''):

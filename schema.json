@@ -30,7 +30,7 @@
             "default": 0
           },
           "devCalibRequired": {
-            "type": "bool",
+            "type": "boolean",
             "title": "Device Calibration required",
             "description": "set to true if calibration must be done and saved",
             "default": false

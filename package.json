@@ -5,11 +5,17 @@
   "main": "index.js",
   "keywords": [
     "signalk-node-server-plugin",
+    "signalk-category-hardware",
+    "signalk-category-utility",
+    "gyro",
+    "magnetometer",
     "IMU",
-    "9DOF",
+    "heading",
+    "attitude",
+    "9-axis",
+    "signalk",
     "attitude",
     "BNO08X"
-
   ],
   "author": "Daniele Pazzaglia <daniele.pazzaglia53@gmail.com> (https://github.com/dpazz)",
   "license": "MIT"
