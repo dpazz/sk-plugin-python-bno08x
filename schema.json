@@ -1,38 +1,66 @@
 {
   "type": "object",
   "properties": {
-    "multipleParametersArray": {
+    "imuDevices": {
       "type": "array",
-      "title": "Example of multiple repeated parameters",
+      "title": "BNO086 9-axis IMU Sensor",
       "items": {
         "type": "object",
         "required": [
-          "param1",
-          "param2"
+          "devName",
+          "devRefresh"
         ],
         "properties": {
-          "param1": {
-            "type": "string",
-            "title": "Parameter 1",
-            "default": "0.0.0.0"
-          },
-          "param2": {
+          "devName": {
             "type": "number",
-            "title": "Parameter 2",
-            "default": 12345
+            "title": "I2C device address",
+            "description": "e.g. 0x4a [74] or 0x4b [75]",
+            "default": 75
+          },
+          "devRefresh": {
+            "type": "number",
+            "title": "Refresh rate",
+            "description": "deltas sending per second",
+            "default": 5
+          },
+          "devDelayReports": {
+            "type": "number",
+            "title": "Delay reports",
+            "description": "report only every times indicated - 0 means always",
+            "default": 0
+          },
+          "devCalibRequired": {
+            "type": "bool",
+            "title": "Device Calibration required",
+            "description": "set to true if calibration must be done and saved",
+            "default": false
+          },
+          "devHdgOffset": {
+            "type": "number",
+            "title": "Heading Offset",
+            "description": "heading installation offset in degrees (-180.0 to 180.0)",
+            "default": 0
+          },
+          "devHdgDeviation": {
+            "type": "number",
+            "title": "Heading Deviation",
+            "description": "heading Deviation in degrees (-180.0 to 180.0)",
+            "default": 0
+          },
+          "devRollOffset": {
+            "type": "number",
+            "title": "Roll Offset",
+            "description": "correction for roll in degrees (-90.0 to 90.0)",
+            "default": 0
+          },
+          "devPitchOffset": {
+            "type": "number",
+            "title": "Pitch Offset",
+            "description": "correction for pitch in degrees (-90.0 to 90.0)",
+            "default": 0
           }
         }
       }
-    },
-    "numberParameterX": {
-      "type": "number",
-      "title": "Param X",
-      "default": 60
-    },
-    "numberParameterY": {
-      "type": "number",
-      "title": "Param Y",
-      "default": 360
     }
   }
 }

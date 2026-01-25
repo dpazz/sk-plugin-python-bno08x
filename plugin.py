@@ -23,7 +23,7 @@ SOFTWARE.
 
 """
 
-import sys, json, threading;
+import sys, json, threading, datetime, logging, time;
 from math import atan2, asin, pi, sqrt
 
 import board
@@ -54,7 +54,7 @@ def scan_for_bno(i2c):
     # Scan and print results
     #print("I2C Scanner")
     devices = i2c.scan()
-    print("I2C devices found: ", [hex(i) for i in devices])
+    print("I2C devices found: ", [hex(i) for i in devices], file = sys.stderr)
     if _BNO08X_ALTERNATIVE_ADDRESS in devices:
       address=_BNO08X_ALTERNATIVE_ADDRESS
     elif _BNO08X_DEFAULT_ADDRESS in devices:
@@ -99,27 +99,115 @@ def find_attitude(dqw, dqx, dqy, dqz):
     # heading in radians clockwise from 0 to 2*pi
 
     return roll, pitch, yaw 
+#deltacount = 0
+class pluginConfig():
+    def __init__(self, dev, rate, rd, nc, ohdg, odev, oroll, opitch):
+        self.name = dev
+        self.rate = rate
+        self.delay = rd
+        self.calib_needed = nc
+        self.hdgOffset = ohdg
+        self.hdgDeviation = odev
+        self.rollOffset = oroll
+        self.pitchOffset = opitch
+        self.delaycount = 0
 
-i2c = busio.I2C(board.SCL, board.SDA)
-reset_pin = DigitalInOut(board.D7)
-#
-try:
-    addr = scan_for_bno(i2c)
-except ValueError as e:
-  print(e)
-#
+def skOutput(dev, path, value):
 
-n = 0
-def outputSk():
-    global n
-    skData = {'updates': [{ 'values': [{'path': 'some.path', 'value': n}]}]}
-    sys.stdout.write(json.dumps(skData) + '\n' + json.dumps(skData))
-    sys.stdout.write('\n')
-    sys.stdout.flush()
-    n += 1
-    threading.Timer(1.0, outputSk).start()
+    skData = {'updates': [{'source': {'label': 'IMU sensor', 'src': 'BNO08X_at['+hex[dev]+']'}, 'timestamp': datetime.datetime.utcnow().isoformat() + "Z", 'values': [{'path': path, 'value': value}]}]}
+    sys.stdout.write(json.dumps(skData) + '\n')
 
-threading.Timer(1.0, outputSk).start()
+def sensorReportLoop(dev,rate, bno, dCfg):
+
+    if dCfg.delaycount == 0:
+        dCfg.delaycount = dCfg.delay
+        game_quat_i, game_quat_j, game_quat_k, game_quat_real = bno.game_quaternion
+        roll, pitch, yaw = find_attitude(game_quat_real, game_quat_i, game_quat_j, game_quat_k)
+        roll += dCfg.rollOffset * pi/180
+        pitch += dCfg.pitchOffset * pi/180
+        yaw += dCfg.hdgOffset * pi/180
+        skOutput(dev,'navigation.attitude.roll',roll)
+        skOutput(dev,'navigation.attitude.pitch',pitch)
+        skOutput(dev,'navigation.attitude.yaw',yaw)
+        #heading = round(yaw * 180/pi)
+        skOutput(dev,'navigation.headingMagnetic',yaw)
+        skOutput(dev,'navigation.headingCompass',yaw + dCfg.hdgDeviation * pi/180)
+
+        sys.stdout.flush()
+    else:
+        dCfg.delaycount -= 1
+    threading.Timer(rate, sensorReportLoop, [dev, rate, bno, dCfg]).start()
+
+def sensorCalibrate(dev, bno):
+    bno.begin_calibration()
+    bno.enable_feature(BNO_REPORT_MAGNETOMETER)
+    bno.enable_feature(BNO_REPORT_GAME_ROTATION_VECTOR)
+    start_time = time.monotonic()
+    calibration_good_at = None
+    while True:
+        time.sleep(0.1)
+        mag_x, mag_y, mag_z = bno.magnetic
+        (
+            game_quat_i,
+            game_quat_j,
+            game_quat_k,
+            game_quat_real,
+        ) = bno.game_quaternion
+        calibration_status = bno.calibration_status
+        if not calibration_good_at and calibration_status >= 2:
+            calibration_good_at = time.monotonic()
+        if calibration_good_at and (time.monotonic() - calibration_good_at > 5.0):
+            skOutput(dev,'sensor.magnetometer.calibration_status',calibration_status)
+            skOutput(dev,'sensor.magnetometer.calibration_quality',adafruit_bno08x.REPORT_ACCURACY_STATUS[calibration_status])
+            sys.stdout.flush()
+            bno.save_calibration_data()
+            break
+        calibration_good_at = None
+    logging.debug("calibration done")
+
+    
+# main entry (enable logging and check device configurations)
+
+myConfigList: list[pluginConfig] = []
+
+logging.basicConfig(stream = sys.stderr, level = logging.DEBUG)
+
+config = json.loads(input())
+
+for options in config["imuDevices"]:
+
+    plgCfg = pluginConfig(options["devName"],
+                          options["devRefresh"],
+                          options["devDelayReports"],
+                          options["devCalibRequired"],
+                          options["devHdgOffset"],
+                          options["devHdgDeviation"],
+                          options["devRollOffset"],
+                          options["devPitchOffset"])
+    myConfigList.append(plgCfg)
+    
+    i2c = busio.I2C(board.SCL, board.SDA)
+    reset_pin = DigitalInOut(board.D7)
+    #
+    try:
+        addr = scan_for_bno(i2c)
+    except ValueError as e:
+        logging.critical(e)
+    #
+    if addr != plgCfg.name :
+        logging.critical("THE CONFIGURED ADDRESS VALUE '" + hex[plgCfg.name] + "'" +" IS DIFFERENT FROM THE ONE FOUND --> '" + hex[addr] + "'")
+
+    rRate = 1/plgCfg.rate # convert repots/sec in secs btw reports
+
+    bno = BNO08X_I2C(i2c, reset=reset_pin, address= addr, debug=False)
+    if plgCfg.calib_needed :
+        sensorCalibrate(addr, bno)
+    else :
+        bno.enable_feature(BNO_REPORT_MAGNETOMETER)
+        bno.enable_feature(BNO_REPORT_GAME_ROTATION_VECTOR)
+    
+    threading.Timer(0.2, sensorReportLoop, [addr, rRate, bno, plgCfg]).start()
+        
 
 for line in iter(sys.stdin.readline, b''):
     try:
@@ -128,4 +216,3 @@ for line in iter(sys.stdin.readline, b''):
     except:
         sys.stderr.write('error parsing json\n')
         sys.stderr.write(line)
-

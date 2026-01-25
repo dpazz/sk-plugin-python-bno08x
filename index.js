@@ -1,6 +1,6 @@
 const { spawn } = require('child_process')
 
-const { execSync } = require('child_process')
+//const { execSync } = require('child_process')
 
 const schema = require('./schema')
 
@@ -10,8 +10,9 @@ module.exports = function (app) {
   let child
  return {
     start: options => {
-      child = execSync('source .env/bin/activate') //set the python required virtual environment
-      child = spawn('python', ['plugin.py'], { cwd: __dirname })
+      //child = execSync('source .env/bin/activate') //set the python required virtual environment
+      //child = spawn('python', ['plugin.py'], { cwd: __dirname })
+      child = spawn('bash', ['set_venv_and_start_plugin.sh'], { cwd: __dirname })
 
       child.stdout.on('data', data => {
         // app.debug(data.toString())
