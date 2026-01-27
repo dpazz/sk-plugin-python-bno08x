@@ -114,56 +114,96 @@ class pluginConfig():
 
 def skOutput(dev, path, value):
 
-    skData = {'updates': [{'source': {'label': 'IMU sensor', 'src': 'BNO08X_at['+hex[dev]+']'}, 'timestamp': datetime.datetime.utcnow().isoformat() + "Z", 'values': [{'path': path, 'value': value}]}]}
-    sys.stdout.write(json.dumps(skData) + '\n')
+    skData = {'updates': [{'source': {'label': 'IMU sensor', 'src': 'I2C_at['+hex(dev)+']'}, 'timestamp': datetime.datetime.utcnow().isoformat() + "Z", 'values': [{'path': path, 'value': value}]}]}
+    print(json.dumps(skData) + '\n')
+
+def skOutput_att(dev, path, r, p, y):
+
+    skData = {'updates': [{'source': {'label': 'IMU sensor', 'src': 'I2C_at['+hex(dev)+']'}, 'timestamp': datetime.datetime.utcnow().isoformat() + "Z", 'values': [{'path': path, 'value':\
+            {"pitch": p, "roll": r, "yaw": y}}]}]}
+    print(json.dumps(skData) + '\n')
 
 def sensorReportLoop(dev,rate, bno, dCfg):
+    times_for_calib_status_update = 100 # calibration status sent every 100 times the normal attitude delta is sent 
     while True:
+        time.sleep(rate)
         if dCfg.delaycount == 0:
             dCfg.delaycount = dCfg.delay
-            game_quat_i, game_quat_j, game_quat_k, game_quat_real = bno.game_quaternion
+            with open ('debug.log', 'a') as sys.stdout :
+                game_quat_i, game_quat_j, game_quat_k, game_quat_real = bno.game_quaternion
+                sys.stdout.flush()
+            sys.stdout = sys.__stdout__ # restore normal stdout file object
             roll, pitch, yaw = find_attitude(game_quat_real, game_quat_i, game_quat_j, game_quat_k)
             roll += dCfg.rollOffset * pi/180
             pitch += dCfg.pitchOffset * pi/180
             yaw += dCfg.hdgOffset * pi/180
-            skOutput(dev,'navigation.attitude.roll',roll)
-            skOutput(dev,'navigation.attitude.pitch',pitch)
-            skOutput(dev,'navigation.attitude.yaw',yaw)
-            #heading = round(yaw * 180/pi)
-            skOutput(dev,'navigation.headingMagnetic',yaw)
-            skOutput(dev,'navigation.headingCompass',yaw + dCfg.hdgDeviation * pi/180)
-
+            """           
+            skOutput(dev,'navigation.attitude.roll', roll)
+            skOutput(dev,'navigation.attitude.pitch', pitch)
+            skOutput(dev,'navigation.attitude.yaw', yaw) # yaw from 0 to 2*pi radians clockwise
+            """
+            skOutput_att(dev,'navigation.attitude', roll, pitch, yaw)
+            skOutput(dev,'navigation.headingMagnetic', yaw) # headingMagnetic from 0 to 2*pi radians clockwise
+            skOutput(dev,'navigation.headingCompass', yaw + dCfg.hdgDeviation * pi/180)
+            #TODO 1: implement a 'deviation table' of values for different bearings and interpolate between them
+            #TODO 2: query NOOA calculator for  magnetic vatiation in your zone/time and add to headingCompass
+            #        to get headingTrue
+            times_for_calib_status_update -= 1
+            if times_for_calib_status_update == 0:
+                times_for_calib_status_update = 100
+                with open('debug.log', 'a') as sys.stdout :
+                    print ("DEBUG: PERIODIC CALIBRATION")
+                    calibration_status = bno.calibration_status
+                    sys.stdout.flush()
+                sys.stdout = sys.__stdout__ # restore normal stdout file object
+                skOutput(dev,'sensors.magnetometer.calibration_status', calibration_status)
+                skOutput(dev,'sensors.magnetometer.calibration_quality', adafruit_bno08x.REPORT_ACCURACY_STATUS[calibration_status])
             sys.stdout.flush()
         else:
             dCfg.delaycount -= 1
-        time.sleep(rate)
-#    threading.Timer(rate, sensorReportLoop, [dev, rate, bno, dCfg]).start()]]
 
 def sensorCalibrate(dev, bno):
-    bno.begin_calibration()
-    bno.enable_feature(BNO_REPORT_MAGNETOMETER)
-    bno.enable_feature(BNO_REPORT_GAME_ROTATION_VECTOR)
-    start_time = time.monotonic()
-    calibration_good_at = None
-    while True:
-        time.sleep(0.1)
-        mag_x, mag_y, mag_z = bno.magnetic
-        (
-            game_quat_i,
-            game_quat_j,
-            game_quat_k,
-            game_quat_real,
-        ) = bno.game_quaternion
-        calibration_status = bno.calibration_status
-        if not calibration_good_at and calibration_status >= 2:
-            calibration_good_at = time.monotonic()
-        if calibration_good_at and (time.monotonic() - calibration_good_at > 5.0):
-            skOutput(dev,'sensor.magnetometer.calibration_status',calibration_status)
-            skOutput(dev,'sensor.magnetometer.calibration_quality',adafruit_bno08x.REPORT_ACCURACY_STATUS[calibration_status])
-            sys.stdout.flush()
-            bno.save_calibration_data()
-            break
+    with open ('calibration.log', 'w') as sys.stdout: # log all packet error during calibration 
+        bno.begin_calibration()
+        bno.enable_feature(BNO_REPORT_MAGNETOMETER)
+        bno.enable_feature(BNO_REPORT_GAME_ROTATION_VECTOR)
+        calibration_good = False
         calibration_good_at = None
+        start_time = time.monotonic()
+        print ("=============== CALIBRATION START =========================")
+        print ("")
+        while True:
+            time.sleep(0.1)
+            mag_x, mag_y, mag_z = bno.magnetic
+            (
+                game_quat_i,
+                game_quat_j,
+                game_quat_k,
+                game_quat_real,
+            ) = bno.game_quaternion
+            calibration_status = bno.calibration_status
+            if calibration_status < 2:
+                calibration_good = False
+                calibration_good_at = None
+            if not calibration_good and calibration_status >= 2:
+                calibration_good_at = time.monotonic()
+                calibration_good = True
+            current_time = time.monotonic()
+            if calibration_good and (current_time - calibration_good_at > 5.0):
+                break
+            if (current_time - start_time) > 50.0 :
+                loggig.critical (' Calibration timeout !!!')
+                raise ValueError (' CALIBRATION TIMEOUT ERROR')
+        print ("Calibrate obtained in "+ repr(current_time-start_time) + ' fractional sec.')
+        print ('Calibration status = ' + repr(calibration_status))
+        print ('Calibration accuracy: ' + adafruit_bno08x.REPORT_ACCURACY_STATUS[calibration_status])
+        print ("============== CALIBRATION END ======================")
+        bno.save_calibration_data()
+        sys.stdout.flush()
+    sys.stdout = sys.__stdout__ # restore normal stdout behavior
+    skOutput(dev,'sensors.magnetometer.calibration_status',calibration_status)
+    skOutput(dev,'sensors.magnetometer.calibration_quality',adafruit_bno08x.REPORT_ACCURACY_STATUS[calibration_status])
+    sys.stdout.flush()
     logging.debug("calibration done")
 
     
@@ -188,7 +228,7 @@ for options in config["imuDevices"]:
     myConfigList.append(plgCfg)
     
     i2c = busio.I2C(board.SCL, board.SDA)
-    reset_pin = DigitalInOut(board.D7)
+    #reset_pin = DigitalInOut(board.D7)
     #
     try:
         addr = scan_for_bno(i2c)
@@ -200,15 +240,14 @@ for options in config["imuDevices"]:
 
     rRate = 1/plgCfg.rate # convert repots/sec in secs btw reports
 
-    bno = BNO08X_I2C(i2c, reset=reset_pin, address= addr, debug=False)
+    bno = BNO08X_I2C(i2c, reset=None , address= addr, debug=False)
     if plgCfg.calib_needed :
         sensorCalibrate(addr, bno)
     else :
         bno.enable_feature(BNO_REPORT_MAGNETOMETER)
         bno.enable_feature(BNO_REPORT_GAME_ROTATION_VECTOR)
-#   threading.Timer(0.2, sensorReportLoop, [addr, rRate, bno, plgCfg]).start()
     time.sleep(0.2)
-    sensorReportLoop (addr, rRate, bno, plgCfg)
+    sensorReportLoop(addr, rRate, bno, plgCfg)
         
 
 for line in iter(sys.stdin.readline, b''):
