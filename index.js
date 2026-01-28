@@ -47,6 +47,7 @@ module.exports = function (app) {
     },
     schema,
     id: pkgData.name,
-    name: pkgData.description
+    name: pkgData.description,
+    description:pkgData.signalk.displayName	
   }
 }

@@ -1,7 +1,7 @@
 {
-  "name": "sk-plugin-python-bno08x",
+  "name": "sk-py-bno08x",
   "version": "1.0.0",
-  "description": "Signal K Node server plugin for BNO08X IMUs family via Python",
+  "description": "Sk plugin for BNO08X IMUs family",
   "main": "index.js",
   "keywords": [
     "signalk-node-server-plugin",

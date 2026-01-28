@@ -153,7 +153,7 @@ def sensorReportLoop(dev,rate, bno, dCfg):
             if times_for_calib_status_update == 0:
                 times_for_calib_status_update = 100
                 if os.stat('debug.log').st_size > 1000000 : # save only last (of less than 1mb size) debug.log
-                    mode : 'w'
+                    mode = 'w'
                 else:
                     mode = 'a'
                 with open('debug.log', mode) as sys.stdout : # redirect stdout to debug.log to avoid debug messages 
@@ -244,7 +244,7 @@ for options in config["imuDevices"]:
     if addr != plgCfg.name :
         logging.critical("THE CONFIGURED ADDRESS VALUE '" + hex[plgCfg.name] + "'" +" IS DIFFERENT FROM THE ONE FOUND --> '" + hex[addr] + "'")
 
-    rRate = 1/plgCfg.rate # convert repots/sec in secs btw reports
+    rRate = 1/plgCfg.rate # convert reports/sec in secs btw reports
 
     bno = BNO08X_I2C(i2c, reset=None , address= addr, debug=False)
     if plgCfg.calib_needed :
