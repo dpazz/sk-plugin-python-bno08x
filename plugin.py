@@ -23,7 +23,8 @@ SOFTWARE.
 
 """
 
-import sys, json, datetime, logging, time;
+import sys, json, datetime, logging, os, time;
+
 from math import atan2, asin, pi, sqrt
 
 import board
@@ -151,8 +152,13 @@ def sensorReportLoop(dev,rate, bno, dCfg):
             times_for_calib_status_update -= 1
             if times_for_calib_status_update == 0:
                 times_for_calib_status_update = 100
-                with open('debug.log', 'a') as sys.stdout :
-                    print ("DEBUG: PERIODIC CALIBRATION")
+                if os.stat('debug.log').st_size > 1000000 : # save only last (of less than 1mb size) debug.log
+                    mode : 'w'
+                else:
+                    mode = 'a'
+                with open('debug.log', mode) as sys.stdout : # redirect stdout to debug.log to avoid debug messages 
+                                                             # being read by javascript parent process
+                    print ("DEBUG: PERIODIC CALIBRATION AT "+ datetime.datetime.utcnow().isoformat())
                     calibration_status = bno.calibration_status
                     sys.stdout.flush()
                 sys.stdout = sys.__stdout__ # restore normal stdout file object
