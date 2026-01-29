@@ -19,7 +19,6 @@
   "license": "MIT",
   "author": "Daniele Pazzaglia <daniele.pazzaglia53@gmail.com> (https://github.com/dpazz)",
   "type": "commonjs",
-  "main": "index.js",
   "repository": {
     "type": "git",
     "url": "git+hhttps://github.com/dpazz/sk-plugin-python-bno08x.git"
