@@ -10,10 +10,10 @@ The project uses the I2C protocol alternative (but also serial or SPI are availa
 
 #### Install/refresh system-wide packages the project is depending on (Debian/Raspbian)
 
-    sudo apt update
-    sudo apt install python3 python3-pip3 python3-venv python3-click
-    sudo apt install i2c-tools libgpiod-dev python3-libgpiod
-    sudo apt install python3-adafruit-blinka python3-adafruit-python-shell
+    $ sudo apt update
+    $ sudo apt install python3 python3-pip3 python3-venv python3-click
+    $ sudo apt install i2c-tools libgpiod-dev python3-libgpiod
+    $ sudo apt install python3-adafruit-blinka python3-adafruit-python-shell
 
 
 
@@ -36,6 +36,8 @@ The project uses the I2C protocol alternative (but also serial or SPI are availa
     $source .env/bin/activate
     (.env) $ pip3 install --upgrade adafruit-python-shell click adafruit-blinka
     (.env) $ pip3 install --upgrade adafruit-circuitpython-bno08x
+
+#### Apply a required workaround to Adafruit_CircuitPython_BNO08x
 
 due to some misinterpreted packets at startup of the I2C protocol of BNO08x the "raise error" command in .env/lib/python3.11/site-packages/adafruit_bno08x/__init__.py should be commented out as suggested by Andrew123098 (Andrew Brown)
 on Aug 9, 2024 (see [here](https://github.com/adafruit/Adafruit_CircuitPython_BNO08x/issues/49)). The following "sed" command applies the workaround in the file hosted in the virtual environment previously installed.
