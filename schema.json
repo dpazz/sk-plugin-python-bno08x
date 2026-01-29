@@ -20,7 +20,7 @@
           "devRefresh": {
             "type": "number",
             "title": "Refresh rate",
-            "description": "deltas sending per second",
+            "description": "deltas sending rate per second",
             "default": 5
           },
           "devDelayReports": {

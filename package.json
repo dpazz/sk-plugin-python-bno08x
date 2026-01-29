@@ -5,6 +5,7 @@
   "main": "index.js",
   "keywords": [
     "signalk-node-server-plugin",
+    "signalk-category-hardware",
     "IMU",
     "9DOF",
     "attitude",
@@ -12,6 +13,7 @@
   ],
   "signalk-plugin-enabled-by-default": false,
   "signalk": {
+    "appIcon": "./img/icon-72x72.png",
     "displayName": "SignalK 9-axis IMU sensor"
   },
   "license": "MIT",

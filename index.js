@@ -12,7 +12,7 @@ module.exports = function (app) {
     start: options => {
       //child = execSync('source .env/bin/activate') //set the python required virtual environment
       //child = spawn('python', ['plugin.py'], { cwd: __dirname })
-      child = spawn('bash', ['set_venv_and_start_plugin.sh'], { cwd: __dirname })
+      child = spawn('bash', ['set_venv_and_start_plugin.sh "/home/pi/.env"'], { cwd: __dirname })
 
       child.stdout.on('data', data => {
         // app.debug(data.toString())

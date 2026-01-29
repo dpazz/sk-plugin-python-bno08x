@@ -1,10 +1,54 @@
-# sk-plugin-python-demo
-Demonstration of a SK server plugin in Python
+# signalk-9xis-bno08x-imu
+SignalK plugin to get heading and attitude sensor data from BNO080/85/86 9-axis IMU family (see [here](https://docs.sparkfun.com/SparkFun_VR_IMU_Breakout_BNO086_QWIIC/introduction/))
+There are many other sources of similar brakout boards (let you search with google "BNO086 breakout") available from e-commerce platforms like Aliexpress, Amazon etc.
+The adoption of QWIIC(STEMMA) cabling is optional but higly recommended if you wish to avoid soldering of a pin strip and to minimize physical dimensions of hardware layout.
 
-## Development
+!["BNO086 Breakout Board"](./img/sensor.png "BNO086 Breakout Board")
 
-- clone the plugin from Github
-- `npm link` in the plugin directory
-- `npm link sk-plugin-python-demo` in your server directory
+The project uses the I2C protocol alternative (but also serial or SPI are available) to let the SBC communicate to the breakout board. Due to some glitch on the I2C protocol implementation in BNO08X chips ensure the bus in your SBC is configured in high speed (clock speed set at 400000), eventually configuring it at "dts" level and rebooting. The project is based on Adafruit Blinka Python Library that let you use CircuitPython environment (with some minor limitations) in a full python3 installation like the one available on Raspbian (Raspberry Pi) or Debian (for other SBCs like Radxa Rock series -tested on Rock-4Se-). Adafruit has a "CircuitPython-based" library for BNO08x family IMU sensors  (see [here] (https://docs.circuitpython.org/projects/bno08x/en/latest/))
+
+
+#### Install/refresh system-wide packages the project is depending on (Debian/Raspbian)
+
+    sudo apt update
+    sudo apt install python3 python3-pip3 python3-venv python3-click
+    sudo apt install i2c-tools libgpiod-dev python3-libgpiod
+    sudo apt install python3-adafruit-blinka python3-adafruit-python-shell
+
+
+
+#### Prepare python3 virtual environment
+    
+    // 
+    //  If you wish a python virtualenv path different from "/home/pi/.env", 
+    //  please edit  "index.js" accordingly in the 'spawn' statement where the
+    //  "set_venv_and_start_plugin.sh" bash script is invoked, by simply substituting
+    //  the parameter string following the script name: "home/pi.env" with the chosen
+    //  absolute pathname string. If another virtualenv path is chosen the following
+    //  shell commands shoud be modified accordingly too.
+    //
+    $ cd ${home} // usually /home/pi
+    $ mkdir .env
+    $ python3 -m venv .env --system-site-packages
+
+#### Activate python3 virtual environment and install/refresh the required packages
+    
+    $source .env/bin/activate
+    (.env) $ pip3 install --upgrade adafruit-python-shell click adafruit-blinka
+    (.env) $ pip3 install --upgrade adafruit-circuitpython-bno08x
+
+due to some misinterpreted packets at startup of the I2C protocol of BNO08x the "raise error" command in .env/lib/python3.11/site-packages/adafruit_bno08x/__init__.py should be commented out as suggested by Andrew123098 (Andrew Brown)
+on Aug 9, 2024 (see [here](https://github.com/adafruit/Adafruit_CircuitPython_BNO08x/issues/49)). The following "sed" command applies the workaround in the file hosted in the virtual environment previously installed.
+
+    (.env) $ sed -i s/raise\ error/#raise\ error/ .env/lib/python3.11/site-packages/adafruit_bno08x/__init__.py
+
+the line to be edited is the only one with that pattern (number 760 as for the latest release at the time of publishing of this README.md)
+
+#### Supported SignalK data path
+
+- self.navigation.attitude {pitch, roll, yaw} (reported as 'object' as defined in signalk specs.)
+
+- self.navigation.headingMagnetic
+- self.navigation.headingCompass -> (headingMagnetic + magneticDeviation)
 
 
