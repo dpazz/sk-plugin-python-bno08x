@@ -24,8 +24,11 @@ the following steps are required only for the first installation of the plugin.
 - ####  Install/refresh system-wide packages the project is depending on (Debian/Raspbian)
 
 >   sudo apt update
+
 >   sudo apt install python3 python3-pip3 python3-venv python3-click
+
 >   sudo apt install i2c-tools libgpiod-dev python3-libgpiod
+
 >   sudo apt install python3-adafruit-blinka python3-adafruit-python-shell
 
 
@@ -45,15 +48,21 @@ the following steps are required only for the first installation of the plugin.
 >        shell commands shoud be modified consequently too.
 >    
 > REMARK
+
 >   cd ${home} # usually /home/pi
+
 >   mkdir .env
+
 >   python3 -m venv .env --system-site-packages
 
 - #### Activate python3 virtual environment and install/refresh the required packages
     
 >   source .env/bin/activate
+
 >   pip3 install --upgrade adafruit-python-shell click adafruit-blinka # the prompt begins with the (.env) string
->                                                                        # to indicate virtual env activation  
+
+>                                                                      # to indicate virtual env activation
+  
 >   pip3 install --upgrade adafruit-circuitpython-bno08x
 
 - #### Apply a required workaround to Adafruit_CircuitPython_BNO08x
