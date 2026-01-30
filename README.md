@@ -46,27 +46,24 @@ the following steps are required only for the first installation of the plugin.
     
     REMARK
 
-     cd ${home} # usually /home/pi
-
-     mkdir .env
-     
-     python3 -m venv .env --system-site-packages
+    cd ${home} # usually /home/pi
+    mkdir .env
+    python3 -m venv .env --system-site-packages
 
 - #### Activate python3 virtual environment and install/refresh the required packages
     
-     source .env/bin/activate
-     pip3 install --upgrade adafruit-python-shell click adafruit-blinka # the prompt begins with the (.env) string
+    source .env/bin/activate
+    pip3 install --upgrade adafruit-python-shell click adafruit-blinka # the prompt begins with the (.env) string
                                                                         # to indicate virtual env activation  
-     pip3 install --upgrade adafruit-circuitpython-bno08x
+    pip3 install --upgrade adafruit-circuitpython-bno08x
 
 - #### Apply a required workaround to Adafruit_CircuitPython_BNO08x
 
-due to some misinterpreted packets at startup of the I2C protocol of BNO08x the "raise error" command in .env/lib/python3.11/site-packages/adafruit_bno08x/__init__.py should be commented out as suggested by Andrew123098 (Andrew Brown)
-on Aug 9, 2024 (see [here](https://github.com/adafruit/Adafruit_CircuitPython_BNO08x/issues/49)). The following "sed" command applies the workaround in the file hosted in the virtual environment previously installed.
+    due to some misinterpreted packets at startup of the I2C protocol of BNO08x the "raise error" command in .env/lib/python3.11/site-packages/adafruit_bno08x/__init__.py should be commented out as suggested by Andrew123098 (Andrew Brown) on Aug 9, 2024 (see [here](https://github.com/adafruit/Adafruit_CircuitPython_BNO08x/issues/49)). The following "sed" command applies the workaround in the file hosted in the virtual environment previously installed.
 
-     sed -i s/raise\ error/#raise\ error/ .env/lib/python3.11/site-packages/adafruit_bno08x/__init__.py
+    sed -i s/raise\ error/#raise\ error/ .env/lib/python3.11/site-packages/adafruit_bno08x/__init__.py
 
-the line to be edited is the only one with that pattern (line number 760 as for the latest release at the time of publishing of this README.md)
+    the line to be edited is the only one with that pattern (line number 760 as for the latest release at the time of publishing of this README.md)
 
 ## Supported SignalK data path
 
