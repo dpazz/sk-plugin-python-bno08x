@@ -1,4 +1,4 @@
-# signalk-9xis-bno08x-imu
+# signalk-9axis-bno08x-imu
 SignalK plugin to get heading and attitude sensor data from BNO080/85/86 9-axis IMU family (see [here](https://docs.sparkfun.com/SparkFun_VR_IMU_Breakout_BNO086_QWIIC/introduction/))
 There are many other sources of similar brakout boards (let you search the web with "BNO086 breakout") available from e-commerce platforms like Aliexpress, Amazon etc.
 
