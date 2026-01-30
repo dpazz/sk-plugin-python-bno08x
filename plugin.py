@@ -234,8 +234,6 @@ for options in config["imuDevices"]:
     myConfigList.append(plgCfg)
     
     i2c = busio.I2C(board.SCL, board.SDA)
-    #reset_pin = DigitalInOut(board.D7)
-    #
     try:
         addr = scan_for_bno(i2c)
     except ValueError as e:

@@ -1,7 +1,5 @@
 const { spawn } = require('child_process')
 
-//const { execSync } = require('child_process')
-
 const schema = require('./schema')
 
 const pkgData = require('./package.json')
