@@ -23,47 +23,44 @@ the following steps are required only for the first installation of the plugin.
 
 - ####  Install/refresh system-wide packages the project is depending on (Debian/Raspbian)
 
-    sudo apt update
-    sudo apt install python3 python3-pip3 python3-venv python3-click
-    sudo apt install i2c-tools libgpiod-dev python3-libgpiod
-    sudo apt install python3-adafruit-blinka python3-adafruit-python-shell
+>   sudo apt update
+>   sudo apt install python3 python3-pip3 python3-venv python3-click
+>   sudo apt install i2c-tools libgpiod-dev python3-libgpiod
+>   sudo apt install python3-adafruit-blinka python3-adafruit-python-shell
 
 
 
 - #### Prepare python3 virtual environment
     
     
-    <<REMARK
-        
-        If you wish a python virtualenv path different from "/home/pi/.env", 
-        please edit the plugin "index.js" accordingly, by simply replacing
-        the "/home/pi/.env" string in the line inside the "start" method:
-            const MY_PYTHON_ENV= "/home/pi/.env"
-        with the chosen absolute pathname string:
-            const MY_PYTHON_ENV= "<the chosen virtual env absolute path>"
-        By the way, if another virtualenv path is chosen the following
-        shell commands shoud be modified consequently too.
-    
-    REMARK
-
-    cd ${home} # usually /home/pi
-
-    mkdir .env
-    
-    python3 -m venv .env --system-site-packages
+> <<REMARK
+>        
+>        If you wish a python virtualenv path different from "/home/pi/.env", 
+>        please edit the plugin "index.js" accordingly, by simply replacing
+>        the "/home/pi/.env" string in the line inside the "start" method:
+>            const MY_PYTHON_ENV= "/home/pi/.env"
+>        with the chosen absolute pathname string:
+>            const MY_PYTHON_ENV= "<the chosen virtual env absolute path>"
+>        By the way, if another virtualenv path is chosen the following
+>        shell commands shoud be modified consequently too.
+>    
+> REMARK
+>   cd ${home} # usually /home/pi
+>   mkdir .env
+>   python3 -m venv .env --system-site-packages
 
 - #### Activate python3 virtual environment and install/refresh the required packages
     
-    source .env/bin/activate
-    pip3 install --upgrade adafruit-python-shell click adafruit-blinka # the prompt begins with the (.env) string
-                                                                        # to indicate virtual env activation  
-    pip3 install --upgrade adafruit-circuitpython-bno08x
+>   source .env/bin/activate
+>   pip3 install --upgrade adafruit-python-shell click adafruit-blinka # the prompt begins with the (.env) string
+>                                                                        # to indicate virtual env activation  
+>   pip3 install --upgrade adafruit-circuitpython-bno08x
 
 - #### Apply a required workaround to Adafruit_CircuitPython_BNO08x
 
     due to some misinterpreted packets at startup of the I2C protocol of BNO08x the "raise error" command in .env/lib/python3.11/site-packages/adafruit_bno08x/__init__.py should be commented out as suggested by Andrew123098 (Andrew Brown) on Aug 9, 2024 (see [here](https://github.com/adafruit/Adafruit_CircuitPython_BNO08x/issues/49)). The following "sed" command applies the workaround in the file hosted in the virtual environment previously installed.
 
-    sed -i s/raise\ error/#raise\ error/ .env/lib/python3.11/site-packages/adafruit_bno08x/__init__.py
+>   sed -i s/raise\ error/#raise\ error/ .env/lib/python3.11/site-packages/adafruit_bno08x/__init__.py
 
     the line to be edited is the only one with that pattern (line number 760 as for the latest release at the time of publishing of this README.md)
 
