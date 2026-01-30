@@ -59,10 +59,8 @@ the following steps are required only for the first installation of the plugin.
     
 >   source .env/bin/activate
 
->   pip3 install --upgrade adafruit-python-shell click adafruit-blinka # the prompt begins with the (.env) string
+>   pip3 install --upgrade adafruit-python-shell click adafruit-blinka # the prompt begins with the (.env) string to indicate virtual env activation
 
->                                                                      # to indicate virtual env activation
-  
 >   pip3 install --upgrade adafruit-circuitpython-bno08x
 
 - #### Apply a required workaround to Adafruit_CircuitPython_BNO08x
