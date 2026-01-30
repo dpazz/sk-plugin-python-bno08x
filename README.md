@@ -14,7 +14,7 @@ The adoption of QWIIC(STEMMA) cabling is optional but highly recommended if you 
 
 The project uses the I2C protocol alternative (but also serial or SPI are available) to let the SBC communicate to the breakout board. Due to some glitch on the I2C protocol implementation in BNO08X chips ensure the bus in your SBC is configured in high speed (clock speed set at 400000), eventually configuring it at "dts" level and rebooting. The project is based on Adafruit Blinka Python Library that let you use CircuitPython environment (with some minor limitations) in a full python3 installation like the one available on Raspbian (Raspberry Pi) or Debian (for other SBCs like Radxa Rock series -tested on Rock-4Se-). Adafruit has a "CircuitPython-based" library for BNO08x family IMU sensors  (see [here] (https://docs.circuitpython.org/projects/bno08x/en/latest/)).
 #### [Note]
-Depending on the wiring of the breakout the default I2C address may be 0x4A [74] or 0x4B [75]. The plugin scans I2C bus to find the actual address (if any) and compares it with the one defined in parameters 'schema' logging a warning if the address found is different from the one defined. Absence of either adresses in the bus forces the plugin to stop.
+Depending on the wiring of the breakout board, the default I2C address may be 0x4A [74] or 0x4B [75]. The plugin scans I2C bus to find the actual address (if any) and compares it with the one defined in parameters 'schema' logging a warning if the address found is different from the one defined. Absence of either adresses in the bus forces the plugin to stop.
 
 ### before installing plugin
 
@@ -33,11 +33,13 @@ the following steps are required only for the first installation of the plugin.
     
     // 
     //  If you wish a python virtualenv path different from "/home/pi/.env", 
-    //  please edit the plugin "index.js" accordingly in the 'spawn' statement where the
-    //  "set_venv_and_start_plugin.sh" bash script is invoked, by simply substituting
-    //  the parameter string following the script name: "home/pi.env" with the chosen
-    //  absolute pathname string. If another virtualenv path is chosen the following
-    //  shell commands shoud be modified accordingly too.
+    //  please edit the plugin "index.js" accordingly, by simply replacing
+    //  the "/home/pi/.env" string in the line inside the "start" method:
+    //      const MY_PYTHON_ENV= "/home/pi/.env"
+    //  with the chosen absolute pathname string:
+    //      const MY_PYTHON_ENV= "<the chosen virtual env absolute path>"
+    //  By the way, if another virtualenv path is chosen the following
+    //  shell commands shoud be modified consequently too.
     //
     $ cd ${home} // usually /home/pi
     $ mkdir .env

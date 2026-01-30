@@ -10,9 +10,9 @@ module.exports = function (app) {
   let child
  return {
     start: options => {
-      //child = execSync('source .env/bin/activate') //set the python required virtual environment
-      //child = spawn('python', ['plugin.py'], { cwd: __dirname })
-      child = spawn('bash', ['set_venv_and_start_plugin.sh "/home/pi/.env"'], { cwd: __dirname })
+      const MY_PYTHON_ENV= "/home/pi/.env"	
+      let MY_PYTHON = MY_PYTHON_ENV + '/bin/python3'
+      child = spawn(MY_PYTHON, ['plugin.py'], { cwd: __dirname })
 
       child.stdout.on('data', data => {
         // app.debug(data.toString())
