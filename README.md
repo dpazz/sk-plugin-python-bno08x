@@ -7,7 +7,10 @@ In the './doc' folder you can find the CEVA BNO08x (the IMU chip at the heart of
 The adoption of QWIIC(STEMMA) cabling is optional but highly recommended if you wish to avoid the soldering of a pin strip and to minimize physical dimensions of hardware layout.
 
 ### Board image (example)
-!["BNO086 Breakout Board"](./img/sensor.png "BNO086 Breakout Board")
+!["BNO086 Breakout Board Front"](./img/sensor_front.png "BNO086 Breakout Board Front")
+
+!["BNO086 Breakout Board Back"](./img/sensor_back.png "BNO086 Breakout Board Back")
+
 ### Stemma cable (qwiic) with female dupont endings in order to connect to SBC header pins
 !["Stemma Cable"](./img/stemma_cable.webp "Stemma Cable")
 
