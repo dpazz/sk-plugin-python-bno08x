@@ -32,6 +32,7 @@ the following steps are required only for the first installation of the plugin.
 
 - #### Prepare python3 virtual environment
     
+    
     <<REMARK
         
         If you wish a python virtualenv path different from "/home/pi/.env", 
@@ -44,9 +45,10 @@ the following steps are required only for the first installation of the plugin.
         shell commands shoud be modified consequently too.
     
     REMARK
-      cd ${home} // usually /home/pi
-      mkdir .env
-      python3 -m venv .env --system-site-packages
+
+     cd ${home} // usually /home/pi
+     mkdir .env
+     python3 -m venv .env --system-site-packages
 
 - #### Activate python3 virtual environment and install/refresh the required packages
     
