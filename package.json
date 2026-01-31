@@ -21,7 +21,7 @@
   "type": "commonjs",
   "repository": {
     "type": "git",
-    "url": "git+hhttps://github.com/dpazz/sk-plugin-python-bno08x.git"
+    "url": "git+https://github.com/dpazz/sk-plugin-python-bno08x.git"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
