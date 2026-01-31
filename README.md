@@ -74,10 +74,10 @@ the following steps are required only for the first installation of the plugin.
 
     due to some misinterpreted packets at startup of the I2C protocol of BNO08x the "raise error" command in .env/lib/python3.11/site-packages/adafruit_bno08x/__init__.py should be commented out as suggested by Andrew123098 (Andrew Brown) on Aug 9, 2024 (see [here](https://github.com/adafruit/Adafruit_CircuitPython_BNO08x/issues/49)). The following "sed" command applies the workaround in the file hosted in the virtual environment previously installed.
 
->   sed -i s/raise\ error/#raise\ error/ .env/lib/python3.11/site-packages/adafruit_bno08x/__init__.py
-
     the line to be edited is the only one with that pattern (line number 760 as for the latest release
-    at the time of publishing of this README.md)
+    of the library at the time of publishing of this README.md)
+
+>   sed -i s/raise\ error/#raise\ error/ .env/lib/python3.11/site-packages/adafruit_bno08x/__init__.py
 
 ## Supported SignalK data path
 
