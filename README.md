@@ -73,9 +73,18 @@ the following steps are required only for the first installation of the plugin.
 
 ## Supported SignalK data path
 
+- ### Defined in standard Signalk Data Model
+
 - self.navigation.attitude {pitch, roll, yaw} (reported as 'object' as defined in signalk specs.)
 
 - self.navigation.headingMagnetic
 - self.navigation.headingCompass -> (headingMagnetic + magneticDeviation)
+
+- ### Custom data path
+    emitted only if calibration enabled in schema
+    at startup plus every 100 standard delta sent
+
+- self.sensors.magnetometer.calibration_status (number) the value of 2 means ok for navigation (less than 2° error) 
+- self.sensors.magnetometer.calibration_accuracy (string) 
 
 
