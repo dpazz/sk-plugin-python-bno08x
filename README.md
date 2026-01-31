@@ -76,7 +76,8 @@ the following steps are required only for the first installation of the plugin.
 
 >   sed -i s/raise\ error/#raise\ error/ .env/lib/python3.11/site-packages/adafruit_bno08x/__init__.py
 
-    the line to be edited is the only one with that pattern (line number 760 as for the latest release at the time of publishing of this README.md)
+    the line to be edited is the only one with that pattern (line number 760 as for the latest release
+    at the time of publishing of this README.md)
 
 ## Supported SignalK data path
 
