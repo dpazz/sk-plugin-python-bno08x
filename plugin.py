@@ -201,7 +201,7 @@ def sensorCalibrate(dev, bno):
             if calibration_good and (current_time - calibration_good_at > 5.0):
                 break
             if (current_time - start_time) > 50.0 :
-                loggig.critical (' Calibration timeout !!!')
+                logging.critical (' Calibration timeout !!!')
                 raise ValueError (' CALIBRATION TIMEOUT ERROR')
         print ("Calibrate obtained in "+ repr(current_time-start_time) + ' fractional sec.')
         print ('Calibration status = ' + repr(calibration_status))
