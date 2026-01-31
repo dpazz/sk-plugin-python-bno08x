@@ -82,7 +82,7 @@ the following steps are required only for the first installation of the plugin.
 
 - ### Custom data path
     emitted only if calibration enabled in schema
-    at startup plus every 100 standard delta sent
+    (at startup plus every 100 standard delta sent)
 
 - self.sensors.magnetometer.calibration_status (number) the value of 2 means ok for navigation (less than 2° error) 
 - self.sensors.magnetometer.calibration_accuracy (string) 
