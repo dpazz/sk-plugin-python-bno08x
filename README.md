@@ -85,6 +85,10 @@ the following steps are required only for the first installation of the plugin.
     (at startup plus every 100 standard delta sent)
 
 - self.sensors.magnetometer.calibration_status (number) the value of 2 means ok for navigation (less than 2° error) 
-- self.sensors.magnetometer.calibration_accuracy (string) 
+- self.sensors.magnetometer.calibration_accuracy (string)
+
+## Files generated in plugin directory
+
+    The files 'calibration.log' and 'debug.log' collect the DEBUG messages for some protocol situation not managed by the Adafruit BNO08x library (it happens during calibration) and normally sent to stdout, respectively, during calibration at startup and during periodic calibration. This plugin redirects this tipe of output to those files in order to write to stdout only messages that can be interpreted as signalk deltas by the server. The 'debug.log' file is limited to 1 Mbyte length and then owerwritten.
 
 
