@@ -150,7 +150,7 @@ def sensorReportLoop(dev,rate, bno, dCfg):
             #TODO 2: query NOOA calculator for  magnetic vatiation in your zone/time and add to headingCompass
             #        to get headingTrue
             # times_for_calib_status_update -= 1
-            if dCfg.calibration_needed :
+            if dCfg.calib_needed :
                 if times_for_calib_status_update == 0:
                     times_for_calib_status_update = 100
                     if os.stat('debug.log').st_size > 1000000 : # save only last (of less than 1mb size) debug.log
