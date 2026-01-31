@@ -39,14 +39,16 @@ the following steps are required only for the first installation of the plugin.
     
 > <<REMARK
 >        
->        If you wish a python virtualenv path different from "/home/pi/.env", 
->        please edit the plugin "index.js" accordingly, by simply replacing
->        the "/home/pi/.env" string in the line inside the "start" method:
->            const MY_PYTHON_ENV= "/home/pi/.env"
->        with the chosen absolute pathname string:
->            const MY_PYTHON_ENV= "<the chosen virtual env absolute path>"
->        By the way, if another virtualenv path is chosen the following
->        shell commands shoud be modified consequently too.
+>If you wish a python virtualenv path different from "/home/pi/.env", 
+>please edit the plugin "index.js" accordingly, by simply replacing
+>the "/home/pi/.env" string in the line inside the "start" method:
+>   const MY_PYTHON_ENV= "/home/pi/.env"
+>with the chosen absolute pathname string:
+>   const MY_PYTHON_ENV= "<the chosen virtual env absolute path>"
+>and subsequently restarting signalk since incorrect environment
+>should have **blocked plugin start**. By the way, if another
+>virtualenv path is chosen the following shell commands
+>*shoud be modified consequently* too.
 >    
 > REMARK
 
