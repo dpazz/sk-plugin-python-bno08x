@@ -1,5 +1,4 @@
 # Signalk-9axis-bno08x-imu
-Acknowledgments to Arancino1 and his plugin "signalk-10axis-ros-imu" which inspired this plugin development (see [link]("https://github.com/arancino1/signalk-10axis-ros-imu/README.md))
 
 SignalK plugin to get heading and attitude sensor data from BNO080/85/86 9-axis IMU family (see [here](https://docs.sparkfun.com/SparkFun_VR_IMU_Breakout_BNO086_QWIIC/introduction/))
 There are many other sources of similar breakout boards (let you search the web with "BNO086 breakout") available from e-commerce platforms like Aliexpress, Amazon etc.
@@ -93,4 +92,6 @@ the following steps are required only for the first installation of the plugin.
 
     The files 'calibration.log' and 'debug.log' collect the DEBUG messages for some protocol situation not managed by the Adafruit BNO08x library (it happens during calibration) and normally sent to stdout, respectively, during calibration at startup and during periodic calibration. This plugin redirects this tipe of output to those files in order to write to stdout only messages that can be interpreted as signalk deltas by the server. The 'debug.log' file is limited to 1 Mbyte length and then owerwritten.
 
+## Acnowledgments
 
+Acknowledgments to Arancino1 and his plugin "signalk-10axis-ros-imu" which inspired this plugin development (see [here](https://github.com/arancino1/signalk-10axis-ros-imu/README.md))
