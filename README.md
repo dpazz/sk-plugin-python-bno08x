@@ -1,5 +1,5 @@
 # Signalk-9axis-bno08x-imu
-Firstly let me acknowledge to Arancino1 and his plugin (see [here]("https://github.com/arancino1/signalk-10axis-ros-imu#readme")) which inspired me for this plugin development
+Firstly let me acknowledge to Arancino1 and his plugin (see [here]("https://github.com/arancino1/signalk-10axis-ros-imu/)) which inspired me for this plugin development
 
 SignalK plugin to get heading and attitude sensor data from BNO080/85/86 9-axis IMU family (see [here](https://docs.sparkfun.com/SparkFun_VR_IMU_Breakout_BNO086_QWIIC/introduction/))
 There are many other sources of similar breakout boards (let you search the web with "BNO086 breakout") available from e-commerce platforms like Aliexpress, Amazon etc.
@@ -15,7 +15,7 @@ The adoption of QWIIC(STEMMA) cabling is optional but highly recommended if you 
 !["Stemma Cable"](./img/stemma_cable.webp "Stemma Cable")
 
 
-The project uses the I2C protocol alternative (but also serial or SPI are available) to let the SBC communicate to the breakout board. Due to some glitch on the I2C protocol implementation in BNO08X chips ensure the bus in your SBC is configured in high speed (clock speed set at 400000), eventually configuring it at "dts" level and rebooting. The project is based on Adafruit Blinka Python Library that let you use CircuitPython environment (with some minor limitations) in a full python3 installation like the one available on Raspbian (Raspberry Pi) or Debian (for other SBCs like Radxa Rock series -tested on Rock-4Se-). Adafruit has a "CircuitPython-based" library for BNO08x family IMU sensors  (see [here] (https://docs.circuitpython.org/projects/bno08x/en/latest/)).
+The project uses the I2C protocol alternative (but also serial or SPI are available) to let the SBC communicate to the breakout board. Due to some glitch on the I2C protocol implementation in BNO08X chips ensure the bus in your SBC is configured in high speed (clock speed set at 400000), eventually configuring it at "dts" level and rebooting. The project is based on Adafruit Blinka Python Library that let you use CircuitPython environment (with some minor limitations) in a full python3 installation like the one available on Raspbian (Raspberry Pi) or Debian (for other SBCs like Radxa Rock series -tested on Rock-4Se-). Adafruit has a "CircuitPython-based" library for BNO08x family IMU sensors  (see [here](https://docs.circuitpython.org/projects/bno08x/en/latest/)).
 #### [Note]
 Depending on the wiring of the breakout board, the default I2C address may be 0x4A [74] or 0x4B [75]. The plugin scans I2C bus to find the actual address (if any) and compares it with the one defined in parameters 'schema' logging a warning if the address found is different from the one defined. Absence of either adresses in the bus forces the plugin to stop.
 
