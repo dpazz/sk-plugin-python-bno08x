@@ -21,7 +21,7 @@
             "type": "number",
             "title": "Refresh rate",
             "description": "deltas sending rate per second",
-            "default": 5
+            "default": 3
           },
           "devDelayReports": {
             "type": "number",
@@ -45,11 +45,11 @@
             "type": "number",
             "title": "NOAA calculator interval",
             "description": "hours betwwen NOAA calculator queries",
-            "default": 2
+            "default": 5
           },
           "devDeclEstimate": {
             "type": "number",
-            "title": "Variation estimate",
+            "title": "Magnetic Variation (Declination) estimate",
             "description": "Initial estimate in decimal degrees (used if any  other source -NooA, Signalk itself- is unavailable",
             "default": 3
           },

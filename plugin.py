@@ -160,6 +160,7 @@ def skOutput_att(dev, path, r, p, y):
 
 def sensorReportLoop(dev,rate, bno, dCfg):
     times_for_calib_status_update = 100 # calibration status sent every 100 times the normal attitude delta is sent
+    declination_initialized = False
     if dCfg.decl_needed :
         declInterval_start= time.monotonic()
         resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/magneticVariation/value', verify=False)
@@ -170,6 +171,7 @@ def sensorReportLoop(dev,rate, bno, dCfg):
             if internet_on() :
                 decl_rad = getDeclination() * pi/180
             skOutput ( dev, 'navigation.magneticVariation', decl_rad )
+            declination_initialized = True
     while True:
         time.sleep(rate)
         if dCfg.delaycount == 0:
@@ -191,14 +193,15 @@ def sensorReportLoop(dev,rate, bno, dCfg):
             skOutput(dev,'navigation.headingCompass', yaw) # headingCompass from 0 to 2*pi radians clockwise
             headingMagnetic = yaw + dCfg.hdgDeviation * pi/180
             skOutput(dev,'navigation.headingMagnetic', headingMagnetic)
+            if declination_initialized :
+                skOutput ( dev, 'navigation.headingTrue', headingMagnetic + decl_rad )
             #TODO 1: implement a 'deviation table' of values for different bearings and interpolate between them
             if dCfg.decl_needed :
                 time_current = time.monotonic()
-                if ((time_current - declInterval_start) >= dCfg.declInterval*3600) : # Interval in hours
+                if ((time_current - declInterval_start) >= dCfg.decl_interval*3600) : # Interval in hours
                     decl_rad = getDeclination() * pi/180 # sk standard key reference requires 'radians' as unit
                     declInterval_start = time_current
                     skOutput ( dev, 'navigation.magneticVaruation', decl_rad )
-                    skOutput ( dev, 'navigation.headingTrue', headingMagnetic + decl_rad )
             if dCfg.calib_needed :
                 if times_for_calib_status_update == 0:
                     times_for_calib_status_update = 100
