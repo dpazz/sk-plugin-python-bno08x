@@ -25,6 +25,8 @@ SOFTWARE.
 
 import sys, json, datetime, logging, os, time;
 
+import ujson, requests
+
 from math import atan2, asin, pi, sqrt
 
 import board
@@ -100,9 +102,23 @@ def find_attitude(dqw, dqx, dqy, dqz):
     # heading in radians clockwise from 0 to 2*pi
 
     return roll, pitch, yaw 
-#deltacount = 0
+
+def getDeclination():
+    resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/value', verify=False)
+    data = ujson.loads(resp.content)
+    lat = "{:.4f}".format(data['latitude'])
+    lon = "{:.4f}".format(data['longitude'])
+    NOAA_DeclCalcAPI = "https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination?lat1="\
++lat+"&lon1="+lon+"&key=zNEw7&resultFormat=json"
+    resp = requests.get(NOAA_DeclCalcAPI, verify=True)
+    data = ujson.loads(resp.content)
+    decl_res = data['result']
+    for key in decl_res:
+        return key['declination']
+
+
 class pluginConfig():
-    def __init__(self, dev, rate, rd, nc, ohdg, odev, oroll, opitch):
+    def __init__(self, dev, rate, rd, nc, nd, di, ohdg, odev, oroll, opitch):
         self.name = dev
         self.rate = rate
         self.delay = rd
@@ -111,6 +127,8 @@ class pluginConfig():
         self.hdgDeviation = odev
         self.rollOffset = oroll
         self.pitchOffset = opitch
+        self.decl_needed = nd
+        self.decl_interval = di
         self.delaycount = 0
 
 def skOutput(dev, path, value):
@@ -125,7 +143,8 @@ def skOutput_att(dev, path, r, p, y):
     print(json.dumps(skData) + '\n')
 
 def sensorReportLoop(dev,rate, bno, dCfg):
-    times_for_calib_status_update = 100 # calibration status sent every 100 times the normal attitude delta is sent 
+    times_for_calib_status_update = 100 # calibration status sent every 100 times the normal attitude delta is sent
+    declInterval_start= time.monotonic() 
     while True:
         time.sleep(rate)
         if dCfg.delaycount == 0:
@@ -145,11 +164,16 @@ def sensorReportLoop(dev,rate, bno, dCfg):
             """
             skOutput_att(dev,'navigation.attitude', roll, pitch, yaw)
             skOutput(dev,'navigation.headingCompass', yaw) # headingCompass from 0 to 2*pi radians clockwise
-            skOutput(dev,'navigation.headingMagnetic', yaw + dCfg.hdgDeviation * pi/180)
+            headingMagnetic = yaw + dCfg.hdgDeviation * pi/180
+            skOutput(dev,'navigation.headingMagnetic', headingMagnetic)
             #TODO 1: implement a 'deviation table' of values for different bearings and interpolate between them
-            #TODO 2: query NOOA calculator for  magnetic vatiation in your zone/time and add to headingCompass
-            #        to get headingTrue
-            # times_for_calib_status_update -= 1
+            if dCfg.decl_needed :
+                time_current = time.monotonic()
+                if ((time_current - declInterval_start) >= dCfg.declInterval*3600) : # Interval in hours
+                    decl_rad = getDeclination() * pi/180 # sk standard key reference requires 'radians' as unit
+                    declInterval_start = time_current
+                    skOutput ( dev, 'navigation.magneticVaruation', decl_rad )
+                    skOutput ( dev, 'navigation.headingTrue', headingMagnetic + decl_rad )
             if dCfg.calib_needed :
                 if times_for_calib_status_update == 0:
                     times_for_calib_status_update = 100
@@ -230,6 +254,8 @@ for options in config["imuDevices"]:
                           options["devRefresh"],
                           options["devDelayReports"],
                           options["devCalibRequired"],
+                          options["devDeclRequired"],
+                          options["devDeclInterval"],
                           options["devHdgOffset"],
                           options["devHdgDeviation"],
                           options["devRollOffset"],

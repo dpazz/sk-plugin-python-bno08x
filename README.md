@@ -87,6 +87,9 @@ the following steps are required only for the first installation of the plugin.
 
 - self.navigation.headingCompass
 - self.navigation.headingMagnetic -> (headingCompass + magneticDeviation)
+if query to NOAA declination calculator (see [here](https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml)) is enabled two more deltas are sent:
+- self.navigation.headingTrue -> (headingMagnetic + magneticDeclination)
+- self.navigation.magneticVariation
 
 - ### Custom data path
     emitted only if calibration enabled in schema
