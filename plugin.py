@@ -27,6 +27,8 @@ import sys, json, datetime, logging, os, time;
 
 import ujson, requests
 
+from urllib.request import urlopen
+
 from math import atan2, asin, pi, sqrt
 
 import board
@@ -103,22 +105,35 @@ def find_attitude(dqw, dqx, dqy, dqz):
 
     return roll, pitch, yaw 
 
+def internet_on():
+    try:
+        response = urlopen('https://www.google.com/', timeout=10)
+        return True
+    except: 
+        return False
+
 def getDeclination():
+    
     resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/value', verify=False)
     data = ujson.loads(resp.content)
     lat = "{:.4f}".format(data['latitude'])
     lon = "{:.4f}".format(data['longitude'])
-    NOAA_DeclCalcAPI = "https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination?lat1="\
+    if internet_on() :
+        NOAA_DeclCalcAPI = "https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination?lat1="\
 +lat+"&lon1="+lon+"&key=zNEw7&resultFormat=json"
-    resp = requests.get(NOAA_DeclCalcAPI, verify=True)
-    data = ujson.loads(resp.content)
-    decl_res = data['result']
-    for key in decl_res:
-        return key['declination']
-
+        resp = requests.get(NOAA_DeclCalcAPI, verify=True)
+        data = ujson.loads(resp.content)
+        decl_res = data['result']
+        for key in decl_res:
+            return key['declination']
+    else:
+        # use the last value stored in signalk
+        resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/magneticVariation/value', verify=False)
+        data = ujson.loads(resp.content)
+        return data ['magneticVariation']
 
 class pluginConfig():
-    def __init__(self, dev, rate, rd, nc, nd, di, ohdg, odev, oroll, opitch):
+    def __init__(self, dev, rate, rd, nc, nd, di, de, ohdg, odev, oroll, opitch):
         self.name = dev
         self.rate = rate
         self.delay = rd
@@ -129,6 +144,7 @@ class pluginConfig():
         self.pitchOffset = opitch
         self.decl_needed = nd
         self.decl_interval = di
+        self.decl_estimate = de
         self.delaycount = 0
 
 def skOutput(dev, path, value):
@@ -144,7 +160,16 @@ def skOutput_att(dev, path, r, p, y):
 
 def sensorReportLoop(dev,rate, bno, dCfg):
     times_for_calib_status_update = 100 # calibration status sent every 100 times the normal attitude delta is sent
-    declInterval_start= time.monotonic() 
+    if dCfg.decl_needed :
+        declInterval_start= time.monotonic()
+        resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/magneticVariation/value', verify=False)
+        data = ujson.loads(resp.content)
+        if (data == None) : # signalk path value never populated
+            # set the estimate defined in schema as the initial default value
+            decl_rad = dCfg.decl_estimate * pi/180 # choose to use degrees for user input in config
+            if internet_on() :
+                decl_rad = getDeclination() * pi/180
+            skOutput ( dev, 'navigation.magneticVariation', decl_rad )
     while True:
         time.sleep(rate)
         if dCfg.delaycount == 0:
@@ -256,6 +281,7 @@ for options in config["imuDevices"]:
                           options["devCalibRequired"],
                           options["devDeclRequired"],
                           options["devDeclInterval"],
+                          options["devDeclEstimate"],
                           options["devHdgOffset"],
                           options["devHdgDeviation"],
                           options["devRollOffset"],

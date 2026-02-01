@@ -47,6 +47,12 @@
             "description": "hours betwwen NOAA calculator queries",
             "default": 2
           },
+          "devDeclEstimate": {
+            "type": "number",
+            "title": "Variation estimate",
+            "description": "Initial estimate in decimal degrees (used if any  other source -NooA, Signalk itself- is unavailable",
+            "default": 3
+          },
           "devHdgOffset": {
             "type": "number",
             "title": "Heading Offset",
