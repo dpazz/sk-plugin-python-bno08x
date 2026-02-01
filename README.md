@@ -18,7 +18,7 @@ The project uses the I2C protocol alternative (but also serial or SPI are availa
 #### [Note]
 Depending on the wiring of the breakout board, the default I2C address may be 0x4A [74] or 0x4B [75]. The plugin scans I2C bus to find the actual address (if any) and compares it with the one defined in parameters 'schema' logging a warning if the address found is different from the one defined. Absence of either adresses in the bus forces the plugin to stop.
 
-The parameter schema can enable the calculation of Magnetic Variation (declination) using programmatically the NOAA calculator (see [here](https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml)) and lat/lon position data given by Signalk server itself (if this option is enabled, the connection to internet must be available)
+The parameter schema can enable the calculation of Magnetic Variation (declination) using programmatically the NOAA calculator (see [here](https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml)) and lat/lon position data given by Signalk server itself (if this option is enabled, the connection to internet must be available or the estimated value defined in schema is used). The query to NoAA calculator is repeated at the configured time interval in plugin schema (default: 5 Hours)
 
 ### Before installing plugin
 
@@ -89,7 +89,9 @@ the following steps are required only for the first installation of the plugin.
 
 - self.navigation.headingCompass
 - self.navigation.headingMagnetic -> (headingCompass + magneticDeviation)
+
 if query to NOAA declination calculator is enabled two more deltas are sent:
+
 - self.navigation.headingTrue -> (headingMagnetic + magneticDeclination)
 - self.navigation.magneticVariation
 
