@@ -144,8 +144,8 @@ def sensorReportLoop(dev,rate, bno, dCfg):
             skOutput(dev,'navigation.attitude.yaw', yaw) # yaw from 0 to 2*pi radians clockwise
             """
             skOutput_att(dev,'navigation.attitude', roll, pitch, yaw)
-            skOutput(dev,'navigation.headingMagnetic', yaw) # headingMagnetic from 0 to 2*pi radians clockwise
-            skOutput(dev,'navigation.headingCompass', yaw + dCfg.hdgDeviation * pi/180)
+            skOutput(dev,'navigation.headingCompass', yaw) # headingCompass from 0 to 2*pi radians clockwise
+            skOutput(dev,'navigation.headingMagnetic', yaw + dCfg.hdgDeviation * pi/180)
             #TODO 1: implement a 'deviation table' of values for different bearings and interpolate between them
             #TODO 2: query NOOA calculator for  magnetic vatiation in your zone/time and add to headingCompass
             #        to get headingTrue

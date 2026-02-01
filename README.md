@@ -85,8 +85,8 @@ the following steps are required only for the first installation of the plugin.
 
 - self.navigation.attitude {pitch, roll, yaw} (reported as 'object' as defined in signalk specs.)
 
-- self.navigation.headingMagnetic
-- self.navigation.headingCompass -> (headingMagnetic + magneticDeviation)
+- self.navigation.headingCompass
+- self.navigation.headingMagnetic -> (headingCompass + magneticDeviation)
 
 - ### Custom data path
     emitted only if calibration enabled in schema
