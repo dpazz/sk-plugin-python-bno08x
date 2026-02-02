@@ -31,14 +31,14 @@
           },
           "devCalibRequired": {
             "type": "boolean",
-            "title": "Device Calibration required",
-            "description": "set to true if calibration must be done and saved",
+            "title": "Device Calibration required and saved",
+            "description": "",
             "default": false
           },
           "devDeclRequired": {
             "type": "boolean",
-            "title": "Query to NOAA declination required",
-            "description": "set to true if deciination must be calculated and headingTrue delta sent",
+            "title": "Query to NOAA declination required and headingTrue delta sent",
+            "description": "",
             "default": false
           },
           "devDeclInterval": {

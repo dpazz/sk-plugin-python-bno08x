@@ -59,7 +59,9 @@ def scan_for_bno(i2c):
     # Scan and print results
     #print("I2C Scanner")
     devices = i2c.scan()
-    print("I2C devices found: ", [hex(i) for i in devices], file = sys.stderr)
+    #print("I2C devices found: ", [hex(i) for i in devices], file = sys.stderr)
+    for i in devices:
+        logger.info ("I2C devices found: [" + hex(i) + "]")
     if _BNO08X_ALTERNATIVE_ADDRESS in devices:
       address=_BNO08X_ALTERNATIVE_ADDRESS
     elif _BNO08X_DEFAULT_ADDRESS in devices:
@@ -147,6 +149,15 @@ class pluginConfig():
         self.decl_estimate = de
         self.delaycount = 0
 
+class CustomAdapter(logging.LoggerAdapter):
+    """
+    From Python cookbook:
+        This example adapter expects the passed in dict-like object to have a
+        'pluginid' key, whose value in brackets is prepended to the log message.
+    """
+    def process(self, msg, kwargs):
+        return '[%s] %s' % (self.extra['pluginid'], msg), kwargs
+
 def skOutput(dev, path, value):
 
     skData = {'updates': [{'source': {'label': 'IMU sensor', 'src': 'I2C_at['+hex(dev)+']'}, 'timestamp': datetime.datetime.utcnow().isoformat() + "Z", 'values': [{'path': path, 'value': value}]}]}
@@ -231,7 +242,8 @@ def sensorCalibrate(dev, bno):
         calibration_good = False
         calibration_good_at = None
         start_time = time.monotonic()
-        print ("=============== CALIBRATION START =========================")
+        source ='BNO08X_I2C_AT[' +hex(dev)+']'
+        print ("=============== "+ source + " CALIBRATION START =========================")
         print ("")
         while True:
             time.sleep(0.1)
@@ -251,28 +263,40 @@ def sensorCalibrate(dev, bno):
                 calibration_good = True
             current_time = time.monotonic()
             if calibration_good and (current_time - calibration_good_at > 5.0):
+                # wait 5 seconds to let calib being stabilized
                 break
             if (current_time - start_time) > 50.0 :
-                logging.critical (' Calibration timeout !!!')
+                logger.critical (' Calibration timeout !!!')
                 raise ValueError (' CALIBRATION TIMEOUT ERROR')
         print ("Calibrate obtained in "+ repr(current_time-start_time) + ' fractional sec.')
         print ('Calibration status = ' + repr(calibration_status))
         print ('Calibration accuracy: ' + adafruit_bno08x.REPORT_ACCURACY_STATUS[calibration_status])
-        print ("============== CALIBRATION END ======================")
+        print ("=============== "+ source + " CALIBRATION END =========================")
         bno.save_calibration_data()
         sys.stdout.flush()
     sys.stdout = sys.__stdout__ # restore normal stdout behavior
     skOutput(dev,'sensors.magnetometer.calibration_status',calibration_status)
     skOutput(dev,'sensors.magnetometer.calibration_quality',adafruit_bno08x.REPORT_ACCURACY_STATUS[calibration_status])
     sys.stdout.flush()
-    logging.debug("calibration done")
+    logger.info("calibration done")
 
     
 # main entry (enable logging and check device configurations)
 
 myConfigList: list[pluginConfig] = []
 
+
+basic_logger = logging.getLogger(__name__)
+logger = CustomAdapter(basic_logger, {'pluginid': "sk-py-bno08x"})
 logging.basicConfig(stream = sys.stderr, level = logging.DEBUG)
+logging.getLogger("adafruit_bno08x").setLevel(logging.WARNING)
+
+# Source - https://stackoverflow.com/a/11029841
+# Posted by aknuds1, modified by community. See post 'Timeline' for change history
+# Retrieved 2026-02-02, License - CC BY-SA 3.0
+
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 config = json.loads(input())
 
@@ -295,10 +319,10 @@ for options in config["imuDevices"]:
     try:
         addr = scan_for_bno(i2c)
     except ValueError as e:
-        logging.critical(e)
+        logger.critical(e)
     #
     if addr != plgCfg.name :
-        logging.critical("THE CONFIGURED ADDRESS VALUE '" + hex[plgCfg.name] + "'" +" IS DIFFERENT FROM THE ONE FOUND --> '" + hex[addr] + "'")
+        logger.critical("THE CONFIGURED ADDRESS VALUE '" + hex[plgCfg.name] + "'" +" IS DIFFERENT FROM THE ONE FOUND --> '" + hex[addr] + "'")
 
     rRate = 1/plgCfg.rate # convert reports/sec in secs btw reports
 
