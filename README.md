@@ -23,7 +23,9 @@ The project uses the I2C protocol alternative (but also serial or SPI are availa
 
 The parameter schema can enable the calculation of Magnetic Variation (declination) using programmatically the NOAA calculator (see [here](https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml)) and lat/lon position data given by Signalk server itself (if this option is enabled, the connection to internet must be available or the estimated value defined in schema is used). The query to NoAA calculator is repeated at the configured time interval in plugin schema (default: 5 Hours).
 ##### [Note]
-        In case of calculation of Magnetic Variation from NoAA enabledn the position of the vessel should be available in Signalk. This sould be ensured by a valid GPS source or by other systems like the one given by the "fixed-position" plugin.    
+        In case of calculation of Magnetic Variation from NoAA enabledn the position of the vessel
+        should be available in Signalk. This sould be ensured by a valid GPS source or by 
+        other systems like the one given by the "fixed-position" plugin.    
 (see [here](https://www.npmjs.com/package/signalk-fixed-position)) 
 
 ### Before installing plugin
