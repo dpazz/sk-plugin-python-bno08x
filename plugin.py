@@ -52,10 +52,8 @@ _BNO08X_DEFAULT_ADDRESS = const(0x4A)
 _BNO08X_ALTERNATIVE_ADDRESS = const(0x4B)
 
 def scan_for_bno(i2c):
-
     while not i2c.try_lock():
       pass
-
     # Scan and print results
     #print("I2C Scanner")
     devices = i2c.scan()
@@ -115,24 +113,33 @@ def internet_on():
         return False
 
 def getDeclination():
-    
+    def getSignalkVariation():
+        try:
+            # use the last value stored in signalk
+            resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/magneticVariation/value', verify=False)
+            data = ujson.loads(resp.content)
+            return data ['magneticVariation']
+        except:
+            return decl_rad # anyway retur the last available value stored in 'decl_rad' global
     resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/value', verify=False)
     data = ujson.loads(resp.content)
+    #TODO Manage eception 'position' not available in Signalk data
     lat = "{:.4f}".format(data['latitude'])
     lon = "{:.4f}".format(data['longitude'])
     if internet_on() :
         NOAA_DeclCalcAPI = "https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination?lat1="\
 +lat+"&lon1="+lon+"&key=zNEw7&resultFormat=json"
         resp = requests.get(NOAA_DeclCalcAPI, verify=True)
-        data = ujson.loads(resp.content)
-        decl_res = data['result']
-        for key in decl_res:
-            return key['declination']
+        try:
+            # manage malformed/unexpected resp content
+            data = ujson.loads(resp.content)
+            decl_res = data['result']
+            for key in decl_res:
+                return key['declination']
+        except:
+            return getSignalKVariation() # anyway return last available value
     else:
-        # use the last value stored in signalk
-        resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/magneticVariation/value', verify=False)
-        data = ujson.loads(resp.content)
-        return data ['magneticVariation']
+        return getSignalkVariation()
 
 class pluginConfig():
     def __init__(self, dev, rate, rd, nc, nd, di, de, ohdg, odev, oroll, opitch):
@@ -325,6 +332,7 @@ for options in config["imuDevices"]:
         logger.critical("THE CONFIGURED ADDRESS VALUE '" + hex[plgCfg.name] + "'" +" IS DIFFERENT FROM THE ONE FOUND --> '" + hex[addr] + "'")
 
     rRate = 1/plgCfg.rate # convert reports/sec in secs btw reports
+    decl_rad = plgCfg.decl_estimate # set the estimate as default
 
     bno = BNO08X_I2C(i2c, reset=None , address= addr, debug=False)
     if plgCfg.calib_needed :
