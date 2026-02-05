@@ -112,15 +112,26 @@ def internet_on():
     except: 
         return False
 
-def getDeclination():
-    def getSignalkVariation():
-        try:
-            # use the last value stored in signalk
+def getSignalkVariation():
+    try:
+        # use the last value stored in signalk
+        resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/magneticVariation/$source', verify=False)
+        data = ujson.loads(resp.content)
+        if data != my_source :
+            try:
+                resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/magneticVariation/values', verify=False)
+                data = ujson.loads(resp.content)
+                return data[my_source]['value']
+            except:
+                return decl_rad # anyway return the last available value stored in 'decl_rad' global
+        else:
             resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/magneticVariation/value', verify=False)
             data = ujson.loads(resp.content)
-            return data ['magneticVariation']
-        except:
-            return decl_rad # anyway retur the last available value stored in 'decl_rad' global
+            return data
+    except:
+        return decl_rad # anyway return the last available value stored in 'decl_rad' global
+
+def getDeclination():
     resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/value', verify=False)
     data = ujson.loads(resp.content)
     #TODO Manage eception 'position' not available in Signalk data
@@ -135,11 +146,12 @@ def getDeclination():
             data = ujson.loads(resp.content)
             decl_res = data['result']
             for key in decl_res:
-                return key['declination']
+                #logger.info("Declination got from NoAA")
+                return key['declination'] * pi/180 # NoAA conventionally responds in degrees
         except:
             return getSignalKVariation() # anyway return last available value
     else:
-        return getSignalkVariation()
+        return getSignalKVariation() # anyway return last available value 
 
 class pluginConfig():
     def __init__(self, dev, rate, rd, nc, nd, di, de, ohdg, odev, oroll, opitch):
@@ -165,31 +177,21 @@ class CustomAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
         return '[%s] %s' % (self.extra['pluginid'], msg), kwargs
 
-def skOutput(dev, path, value):
+def skOutput(mySource, path, value):
 
-    skData = {'updates': [{'source': {'label': 'IMU sensor', 'src': 'I2C_at['+hex(dev)+']'}, 'timestamp': datetime.datetime.utcnow().isoformat() + "Z", 'values': [{'path': path, 'value': value}]}]}
+    skData = {'updates': [{'source': {'label': 'IMU sensor', 'src': mySource }, 'timestamp': datetime.datetime.utcnow().isoformat() + "Z", 'values': [{'path': path, 'value': value}]}]}
     print(json.dumps(skData) + '\n')
 
-def skOutput_att(dev, path, r, p, y):
+def skOutput_att(mySource, path, r, p, y):
 
-    skData = {'updates': [{'source': {'label': 'IMU sensor', 'src': 'I2C_at['+hex(dev)+']'}, 'timestamp': datetime.datetime.utcnow().isoformat() + "Z", 'values': [{'path': path, 'value':\
+    skData = {'updates': [{'source': {'label': 'IMU sensor', 'src': mySource }, 'timestamp': datetime.datetime.utcnow().isoformat() + "Z", 'values': [{'path': path, 'value':\
             {"pitch": p, "roll": r, "yaw": y}}]}]}
     print(json.dumps(skData) + '\n')
 
-def sensorReportLoop(dev,rate, bno, dCfg):
+def sensorReportLoop(mySource,rate, bno, dCfg):
     times_for_calib_status_update = 100 # calibration status sent every 100 times the normal attitude delta is sent
-    declination_initialized = False
-    if dCfg.decl_needed :
-        declInterval_start= time.monotonic()
-        resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/magneticVariation/value', verify=False)
-        data = ujson.loads(resp.content)
-        if (data == None) : # signalk path value never populated
-            # set the estimate defined in schema as the initial default value
-            decl_rad = dCfg.decl_estimate * pi/180 # choose to use degrees for user input in config
-            if internet_on() :
-                decl_rad = getDeclination() * pi/180
-            skOutput ( dev, 'navigation.magneticVariation', decl_rad )
-            declination_initialized = True
+    declInterval_start = time.monotonic()
+    global decl_rad
     while True:
         time.sleep(rate)
         if dCfg.delaycount == 0:
@@ -202,24 +204,18 @@ def sensorReportLoop(dev,rate, bno, dCfg):
             roll += dCfg.rollOffset * pi/180
             pitch += dCfg.pitchOffset * pi/180
             yaw += dCfg.hdgOffset * pi/180
-            """           
-            skOutput(dev,'navigation.attitude.roll', roll)
-            skOutput(dev,'navigation.attitude.pitch', pitch)
-            skOutput(dev,'navigation.attitude.yaw', yaw) # yaw from 0 to 2*pi radians clockwise
-            """
-            skOutput_att(dev,'navigation.attitude', roll, pitch, yaw)
-            skOutput(dev,'navigation.headingCompass', yaw) # headingCompass from 0 to 2*pi radians clockwise
+            skOutput_att(mySource,'navigation.attitude', roll, pitch, yaw)
+            skOutput(mySource,'navigation.headingCompass', yaw) # headingCompass from 0 to 2*pi radians clockwise
             headingMagnetic = yaw + dCfg.hdgDeviation * pi/180
-            skOutput(dev,'navigation.headingMagnetic', headingMagnetic)
-            if declination_initialized :
-                skOutput ( dev, 'navigation.headingTrue', headingMagnetic + decl_rad )
             #TODO 1: implement a 'deviation table' of values for different bearings and interpolate between them
+            skOutput(mySource,'navigation.headingMagnetic', headingMagnetic)
             if dCfg.decl_needed :
+                skOutput ( mySource, 'navigation.headingTrue', headingMagnetic + decl_rad )
                 time_current = time.monotonic()
                 if ((time_current - declInterval_start) >= dCfg.decl_interval*3600) : # Interval in hours
-                    decl_rad = getDeclination() * pi/180 # sk standard key reference requires 'radians' as unit
+                    decl_rad = getDeclination()
                     declInterval_start = time_current
-                    skOutput ( dev, 'navigation.magneticVaruation', decl_rad )
+                    skOutput ( mySource, 'navigation.magneticVariation', decl_rad )
             if dCfg.calib_needed :
                 if times_for_calib_status_update == 0:
                     times_for_calib_status_update = 100
@@ -233,15 +229,15 @@ def sensorReportLoop(dev,rate, bno, dCfg):
                         calibration_status = bno.calibration_status
                         sys.stdout.flush()
                     sys.stdout = sys.__stdout__ # restore normal stdout file object
-                    skOutput(dev,'sensors.magnetometer.calibration_status', calibration_status)
-                    skOutput(dev,'sensors.magnetometer.calibration_quality', adafruit_bno08x.REPORT_ACCURACY_STATUS[calibration_status])
+                    skOutput(mySource,'sensors.magnetometer.calibration_status', calibration_status)
+                    skOutput(mySource,'sensors.magnetometer.calibration_quality', adafruit_bno08x.REPORT_ACCURACY_STATUS[calibration_status])
                 else:
                     times_for_calib_status_update -=1
             sys.stdout.flush()
         else:
             dCfg.delaycount -= 1
 
-def sensorCalibrate(dev, bno):
+def sensorCalibrate(dev, mySource,  bno):
     with open ('calibration.log', 'w') as sys.stdout: # log all packet error during calibration 
         bno.begin_calibration()
         bno.enable_feature(BNO_REPORT_MAGNETOMETER)
@@ -282,8 +278,8 @@ def sensorCalibrate(dev, bno):
         bno.save_calibration_data()
         sys.stdout.flush()
     sys.stdout = sys.__stdout__ # restore normal stdout behavior
-    skOutput(dev,'sensors.magnetometer.calibration_status',calibration_status)
-    skOutput(dev,'sensors.magnetometer.calibration_quality',adafruit_bno08x.REPORT_ACCURACY_STATUS[calibration_status])
+    skOutput(mySource,'sensors.magnetometer.calibration_status',calibration_status)
+    skOutput(mySource,'sensors.magnetometer.calibration_quality',adafruit_bno08x.REPORT_ACCURACY_STATUS[calibration_status])
     sys.stdout.flush()
     logger.info("calibration done")
 
@@ -322,6 +318,10 @@ for options in config["imuDevices"]:
                           options["devPitchOffset"])
     myConfigList.append(plgCfg)
     
+    global my_source
+    global my_source_addr_part
+    global decl_rad
+
     i2c = busio.I2C(board.SCL, board.SDA)
     try:
         addr = scan_for_bno(i2c)
@@ -330,19 +330,28 @@ for options in config["imuDevices"]:
     #
     if addr != plgCfg.name :
         logger.critical("THE CONFIGURED ADDRESS VALUE '" + hex[plgCfg.name] + "'" +" IS DIFFERENT FROM THE ONE FOUND --> '" + hex[addr] + "'")
-
+    package_name = 'sk-py-bno08x'
+    my_source_addr_part = 'I2C_at['+hex(addr)+']'
+    my_source = package_name + '.' + my_source_addr_part
     rRate = 1/plgCfg.rate # convert reports/sec in secs btw reports
-    decl_rad = plgCfg.decl_estimate # set the estimate as default
-
     bno = BNO08X_I2C(i2c, reset=None , address= addr, debug=False)
     if plgCfg.calib_needed :
-        sensorCalibrate(addr, bno)
+        sensorCalibrate(addr, my_source_addr_part, bno)
     else :
         bno.enable_feature(BNO_REPORT_MAGNETOMETER)
         bno.enable_feature(BNO_REPORT_GAME_ROTATION_VECTOR)
+    
+    sys.stdout.flush() #to guarantee that output buffer is clean after bno calib/enable features
     time.sleep(0.2)
-    sensorReportLoop(addr, rRate, bno, plgCfg)
-        
+    
+    # set the estimate defined in schema as the initial default value
+    decl_rad = plgCfg.decl_estimate * pi/180 # choosen to use degrees for user input in config
+    if plgCfg.decl_needed :
+        decl_rad = getDeclination()
+        skOutput( my_source_addr_part, 'navigation.magneticVariation', decl_rad )
+        logger.info ("navigation.magneticVariation initialized")
+
+    sensorReportLoop(my_source_addr_part, rRate, bno, plgCfg)    
 
 for line in iter(sys.stdin.readline, b''):
     try:
