@@ -149,9 +149,11 @@ def getDeclination():
                 #logger.info("Declination got from NoAA")
                 return key['declination'] * pi/180 # NoAA conventionally responds in degrees
         except:
-            return getSignalKVariation() # anyway return last available value
+            ret = getSignalkVariation()
+            return ret # anyway return last available value
     else:
-        return getSignalKVariation() # anyway return last available value 
+        ret = getSignalkVariation()
+        return ret # anyway return last available value 
 
 class pluginConfig():
     def __init__(self, dev, rate, rd, nc, nd, di, de, ohdg, odev, oroll, opitch):
