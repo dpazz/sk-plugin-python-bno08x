@@ -340,9 +340,13 @@ for options in config["imuDevices"]:
     if plgCfg.calib_needed :
         sensorCalibrate(addr, my_source_addr_part, bno)
     else :
-        bno.enable_feature(BNO_REPORT_MAGNETOMETER)
-        bno.enable_feature(BNO_REPORT_GAME_ROTATION_VECTOR)
-    
+        with open ('debug.log', 'a') as sys.stdout :
+            bno.enable_feature(BNO_REPORT_MAGNETOMETER)
+            bno.enable_feature(BNO_REPORT_GAME_ROTATION_VECTOR)
+            time.sleep(0.2)
+            sys.stdout.flush()
+        sys.stdout = sys.__stdout__ # restore normal stdout file object
+        
     sys.stdout.flush() #to guarantee that output buffer is clean after bno calib/enable features
     time.sleep(0.2)
     
