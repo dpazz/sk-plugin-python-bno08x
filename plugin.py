@@ -132,26 +132,30 @@ def getSignalkVariation():
         return decl_rad # anyway return the last available value stored in 'decl_rad' global
 
 def getDeclination():
-    resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/value', verify=False)
-    data = ujson.loads(resp.content)
-    #TODO Manage eception 'position' not available in Signalk data
-    lat = "{:.4f}".format(data['latitude'])
-    lon = "{:.4f}".format(data['longitude'])
-    if internet_on() :
-        NOAA_DeclCalcAPI = "https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination?lat1="\
+    try:
+        resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/value', verify=False)
+        data = ujson.loads(resp.content)
+        #TODO Manage eception 'position' not available in Signalk data
+        lat = "{:.4f}".format(data['latitude'])
+        lon = "{:.4f}".format(data['longitude'])
+        if internet_on() :
+            NOAA_DeclCalcAPI = "https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination?lat1="\
 +lat+"&lon1="+lon+"&key=zNEw7&resultFormat=json"
-        resp = requests.get(NOAA_DeclCalcAPI, verify=True)
-        try:
-            # manage malformed/unexpected resp content
-            data = ujson.loads(resp.content)
-            decl_res = data['result']
-            for key in decl_res:
-                #logger.info("Declination got from NoAA")
-                return key['declination'] * pi/180 # NoAA conventionally responds in degrees
-        except:
+            resp = requests.get(NOAA_DeclCalcAPI, verify=True)
+            try:
+                # manage malformed/unexpected resp content
+                data = ujson.loads(resp.content)
+                decl_res = data['result']
+                for key in decl_res:
+                    #logger.info("Declination got from NoAA")
+                    return key['declination'] * pi/180 # NoAA conventionally responds in degrees
+            except:
+                ret = getSignalkVariation()
+                return ret # anyway return last available value
+        else:
             ret = getSignalkVariation()
-            return ret # anyway return last available value
-    else:
+            return ret # anyway return last available value 
+    except:
         ret = getSignalkVariation()
         return ret # anyway return last available value 
 
