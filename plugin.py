@@ -133,7 +133,7 @@ def getSignalkVariation():
 
 def getDeclination():
     #resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/values/signalk-fixed-position/value', verify=False)
-    #DONE Manage eception not null 'position' not available in Signalk data
+    #DONE Manage exception not null 'position' not available in Signalk data
     resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/value', verify=False)
     try:
         # manage malformed/unexpected resp content
