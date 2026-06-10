@@ -132,10 +132,12 @@ def getSignalkVariation():
         return decl_rad # anyway return the last available value stored in 'decl_rad' global
 
 def getDeclination():
+    #resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/values/signalk-fixed-position/value', verify=False)
+    #DONE Manage eception not null 'position' not available in Signalk data
+    resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/value', verify=False)
     try:
-        resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/value', verify=False)
+        # manage malformed/unexpected resp content
         data = ujson.loads(resp.content)
-        #TODO Manage eception 'position' not available in Signalk data
         lat = "{:.4f}".format(data['latitude'])
         lon = "{:.4f}".format(data['longitude'])
         if internet_on() :
@@ -150,14 +152,11 @@ def getDeclination():
                     #logger.info("Declination got from NoAA")
                     return key['declination'] * pi/180 # NoAA conventionally responds in degrees
             except:
-                ret = getSignalkVariation()
-                return ret # anyway return last available value
+                return getSignalKVariation() # anyway return last available value
         else:
-            ret = getSignalkVariation()
-            return ret # anyway return last available value 
+            return getSignalKVariation() # anyway return last available value 
     except:
-        ret = getSignalkVariation()
-        return ret # anyway return last available value 
+        return getSignalKVariation() # anyway return last available value
 
 class pluginConfig():
     def __init__(self, dev, rate, rd, nc, nd, di, de, ohdg, odev, oroll, opitch):
@@ -344,13 +343,9 @@ for options in config["imuDevices"]:
     if plgCfg.calib_needed :
         sensorCalibrate(addr, my_source_addr_part, bno)
     else :
-        with open ('debug.log', 'a') as sys.stdout :
-            bno.enable_feature(BNO_REPORT_MAGNETOMETER)
-            bno.enable_feature(BNO_REPORT_GAME_ROTATION_VECTOR)
-            time.sleep(0.2)
-            sys.stdout.flush()
-        sys.stdout = sys.__stdout__ # restore normal stdout file object
-        
+        bno.enable_feature(BNO_REPORT_MAGNETOMETER)
+        bno.enable_feature(BNO_REPORT_GAME_ROTATION_VECTOR)
+    
     sys.stdout.flush() #to guarantee that output buffer is clean after bno calib/enable features
     time.sleep(0.2)
     
