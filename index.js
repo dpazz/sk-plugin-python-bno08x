@@ -39,8 +39,15 @@ module.exports = function (app) {
     },
     stop: () => {
       if (child) {
-        process.kill(child.pid)
-        child = undefined
+	try {
+          if (process.kill(child.pid, 0)) {
+            process.kill(child.pid);
+          }
+        } catch (error) {
+          console.error(error);
+          child = undefined;
+        }      
+        child = undefined;
       }
     },
     schema,
