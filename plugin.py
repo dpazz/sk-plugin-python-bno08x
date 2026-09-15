@@ -112,7 +112,7 @@ def internet_on():
     except: 
         return False
 
-def SignalKPositionAvailable():
+def SignalkPositionAvailable():
     try:
         resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/value', verify=False)
         testo = resp.text
@@ -146,11 +146,11 @@ def getDeclination():
     #resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/values/signalk-fixed-position/value', verify=False)
     #DONE Manage exception not null 'position' not available in Signalk data
     #resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/value', verify=False)
-    if SignalKPositionAvailable () :
+    if SignalkPositionAvailable() :
         try:
             # manage malformed/unexpected resp content
             #resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/value', verify=False)
-            # resp already updated by SignalKPositionAvailable () call
+            # resp already updated by SignalkPositionAvailable () call
             data = ujson.loads(resp.content)
             lat = "{:.4f}".format(data['latitude'])
             lon = "{:.4f}".format(data['longitude'])
@@ -167,13 +167,13 @@ def getDeclination():
                         #logger.info("Declination got from NoAA")
                         return key['declination'] * pi/180 # NoAA conventionally responds in degrees
                 except:
-                    return getSignalKVariation() # anyway return last available value
+                    return getSignalkVariation() # anyway return last available value
             else:
-                return getSignalKVariation() # anyway return last available value 
+                return getSignalkVariation() # anyway return last available value 
         except:
-            return getSignalKVariation() # anyway return last available value
+            return getSignalkVariation() # anyway return last available value
     else:
-        return getSignalKVariation() # anyway return last available value
+        return getSignalkVariation() # anyway return last available value
 class pluginConfig():
     def __init__(self, dev, rate, rd, nc, nd, di, de, ohdg, odev, oroll, opitch):
         self.name = dev
