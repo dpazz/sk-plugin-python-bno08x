@@ -265,8 +265,8 @@ def sensorCalibrate(dev, mySource,  bno):
         bno.enable_feature(BNO_REPORT_MAGNETOMETER)
         bno.enable_feature(BNO_REPORT_GAME_ROTATION_VECTOR)
         calibration_good = False
-        calibration_good_at = None
         start_time = time.monotonic()
+        calibration_good_at = start_time
         source ='BNO08X_I2C_AT[' +hex(dev)+']'
         print ("=============== "+ source + " CALIBRATION START =========================")
         print ("")
@@ -283,13 +283,13 @@ def sensorCalibrate(dev, mySource,  bno):
             current_time = time.monotonic()
             if calibration_status < 2:
                 calibration_good = False
-            #if not calibration_good and calibration_status >= 2:
+                calibration_good_at = current_time # reset calib interval start
             else:
                 if not calibration_good :
                     calibration_good_at = time.monotonic()
                 calibration_good = True
             if calibration_good and (current_time - calibration_good_at > 5.0):
-                # wait 5 seconds to let calib being stabilized
+                # wait at least 5 seconds to let calib being stabilized
                 break
             if (current_time - start_time) > 50.0 :
                 logger.critical (' Calibration timeout !!!')
