@@ -112,6 +112,17 @@ def internet_on():
     except: 
         return False
 
+def SignalKPositionAvailable():
+    try:
+        resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/value', verify=False)
+        testo = resp.text
+        if testo =='null':
+            return False
+        else:
+            return True
+    except:
+        return False
+
 def getSignalkVariation():
     try:
         # use the last value stored in signalk
@@ -134,30 +145,35 @@ def getSignalkVariation():
 def getDeclination():
     #resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/values/signalk-fixed-position/value', verify=False)
     #DONE Manage exception not null 'position' not available in Signalk data
-    resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/value', verify=False)
-    try:
-        # manage malformed/unexpected resp content
-        data = ujson.loads(resp.content)
-        lat = "{:.4f}".format(data['latitude'])
-        lon = "{:.4f}".format(data['longitude'])
-        if internet_on() :
-            NOAA_DeclCalcAPI = "https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination?lat1="\
+    #resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/value', verify=False)
+    if SignalKPositionAvailable () :
+        try:
+            # manage malformed/unexpected resp content
+            #resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/value', verify=False)
+            # resp already updated by SignalKPositionAvailable () call
+            data = ujson.loads(resp.content)
+            lat = "{:.4f}".format(data['latitude'])
+            lon = "{:.4f}".format(data['longitude'])
+            if internet_on() :
+                try:
+                    NOAA_DeclCalcAPI = "https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination?lat1="\
 +lat+"&lon1="+lon+"&key=zNEw7&resultFormat=json"
-            resp = requests.get(NOAA_DeclCalcAPI, verify=True)
-            try:
-                # manage malformed/unexpected resp content
-                data = ujson.loads(resp.content)
-                decl_res = data['result']
-                for key in decl_res:
-                    #logger.info("Declination got from NoAA")
-                    return key['declination'] * pi/180 # NoAA conventionally responds in degrees
-            except:
-                return getSignalKVariation() # anyway return last available value
-        else:
-            return getSignalKVariation() # anyway return last available value 
-    except:
+                    resp = requests.get(NOAA_DeclCalcAPI, verify=True)
+                #try:
+                    # manage malformed/unexpected resp content
+                    data = ujson.loads(resp.content)
+                    decl_res = data['result']
+                    for key in decl_res:
+                        #logger.info("Declination got from NoAA")
+                        return key['declination'] * pi/180 # NoAA conventionally responds in degrees
+                except:
+                    return getSignalKVariation() # anyway return last available value
+            else:
+                return getSignalKVariation() # anyway return last available value 
+        except:
+            return getSignalKVariation() # anyway return last available value
+    else:
         return getSignalKVariation() # anyway return last available value
-
 class pluginConfig():
     def __init__(self, dev, rate, rd, nc, nd, di, de, ohdg, odev, oroll, opitch):
         self.name = dev
@@ -197,6 +213,7 @@ def sensorReportLoop(mySource,rate, bno, dCfg):
     times_for_calib_status_update = 100 # calibration status sent every 100 times the normal attitude delta is sent
     declInterval_start = time.monotonic()
     global decl_rad
+    global resp
     while True:
         time.sleep(rate)
         if dCfg.delaycount == 0:
@@ -326,6 +343,7 @@ for options in config["imuDevices"]:
     global my_source
     global my_source_addr_part
     global decl_rad
+    global resp
 
     i2c = busio.I2C(board.SCL, board.SDA)
     try:
