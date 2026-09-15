@@ -280,13 +280,14 @@ def sensorCalibrate(dev, mySource,  bno):
                 game_quat_real,
             ) = bno.game_quaternion
             calibration_status = bno.calibration_status
+            current_time = time.monotonic()
             if calibration_status < 2:
                 calibration_good = False
-                calibration_good_at = None
-            if not calibration_good and calibration_status >= 2:
-                calibration_good_at = time.monotonic()
+            #if not calibration_good and calibration_status >= 2:
+            else:
+                if not calibration_good :
+                    calibration_good_at = time.monotonic()
                 calibration_good = True
-            current_time = time.monotonic()
             if calibration_good and (current_time - calibration_good_at > 5.0):
                 # wait 5 seconds to let calib being stabilized
                 break
