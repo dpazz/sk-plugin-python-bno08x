@@ -247,7 +247,7 @@ def sensorReportLoop(mySource,rate, bno, dCfg):
                         mode = 'a'
                     with open('debug.log', mode) as sys.stdout : # redirect stdout to debug.log to avoid debug messages 
                                                                  # being read by javascript parent process
-                        print ("DEBUG: PERIODIC CALIBRATION AT "+ datetime.datetime.utcnow().isoformat())
+                        print ("DEBUG: PERIODIC CALIBRATION VERIFIED AT "+ datetime.datetime.utcnow().isoformat())
                         calibration_status = bno.calibration_status
                         sys.stdout.flush()
                     sys.stdout = sys.__stdout__ # restore normal stdout file object
