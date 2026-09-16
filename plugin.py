@@ -254,7 +254,7 @@ def sensorReportLoop(mySource,rate, bno, dCfg):
                     skOutput(mySource,'sensors.magnetometer.calibration_status', calibration_status)
                     skOutput(mySource,'sensors.magnetometer.calibration_quality', adafruit_bno08x.REPORT_ACCURACY_STATUS[calibration_status])
                 else:
-                    times_for_calib_status_update -=1
+                   times_for_calib_status_update -= 1
             sys.stdout.flush()
         else:
             dCfg.delaycount -= 1
@@ -290,10 +290,14 @@ def sensorCalibrate(dev, mySource,  bno):
                 calibration_good = True
             if calibration_good and (current_time - calibration_good_at > 5.0):
                 # wait at least 5 seconds to let calib being stabilized
+                calib_exit = "CALIBRATION OK"
                 break
             if (current_time - start_time) > 50.0 :
                 logger.critical (' Calibration timeout !!!')
-                raise ValueError (' CALIBRATION TIMEOUT ERROR')
+                #raise ValueError (' CALIBRATION TIMEOUT ERROR')
+                calib_exit = "CALIBRATION TIMEOUT ERROR"
+                break
+        print (calib_exit)
         print ("Calibrate obtained in "+ repr(current_time-start_time) + ' fractional sec.')
         print ('Calibration status = ' + repr(calibration_status))
         print ('Calibration accuracy: ' + adafruit_bno08x.REPORT_ACCURACY_STATUS[calibration_status])
