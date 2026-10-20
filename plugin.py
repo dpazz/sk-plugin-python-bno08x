@@ -51,26 +51,45 @@ from micropython import const
 _BNO08X_DEFAULT_ADDRESS = const(0x4A)
 _BNO08X_ALTERNATIVE_ADDRESS = const(0x4B)
 
-def scan_for_bno(i2c):
+def scan_for_bno(i2c, preferred=None, quiet=False):
     while not i2c.try_lock():
       pass
-    # Scan and print results
-    #print("I2C Scanner")
-    devices = i2c.scan()
+    try:
+        # Scan and print results
+        #print("I2C Scanner")
+        devices = i2c.scan()
+    finally:
+        # Unlock the bus (also when the scan fails or no device is found)
+        i2c.unlock()
     #print("I2C devices found: ", [hex(i) for i in devices], file = sys.stderr)
-    for i in devices:
-        logger.info ("I2C devices found: [" + hex(i) + "]")
-    if _BNO08X_ALTERNATIVE_ADDRESS in devices:
+    if not quiet:
+        for i in devices:
+            logger.info ("I2C devices found: [" + hex(i) + "]")
+    if preferred in (_BNO08X_DEFAULT_ADDRESS, _BNO08X_ALTERNATIVE_ADDRESS) and preferred in devices:
+      address=preferred # the configured address wins when it is on the bus
+    elif _BNO08X_ALTERNATIVE_ADDRESS in devices:
       address=_BNO08X_ALTERNATIVE_ADDRESS
     elif _BNO08X_DEFAULT_ADDRESS in devices:
       address=_BNO08X_DEFAULT_ADDRESS
     else:
-      i2c.unlock # Anyway unlock the bus
       raise ValueError("NO VALID BNO08X ADDRESS FOUND IN THE I2C BUS")
-
-    # Unlock the bus
-    i2c.unlock()
     return address
+
+# Seconds between I2C scans while no BNO08X is on the bus
+_SCAN_RETRY_SECONDS = 30
+
+def wait_for_bno(i2c, preferred):
+    """Scan until a BNO08X answers. Logs the missing sensor once instead of crashing
+    (before, a missing sensor ended in "NameError: name 'addr' is not defined")."""
+    warned = False
+    while True:
+        try:
+            return scan_for_bno(i2c, preferred, quiet=warned)
+        except ValueError as e:
+            if not warned:
+                logger.critical(str(e) + " - retrying every " + str(_SCAN_RETRY_SECONDS) + " s")
+                warned = True
+        time.sleep(_SCAN_RETRY_SECONDS)
 
 def find_attitude(dqw, dqx, dqy, dqz):
     norm = sqrt(dqw * dqw + dqx * dqx + dqy * dqy + dqz * dqz)
@@ -113,15 +132,16 @@ def internet_on():
         return False
 
 def SignalkPositionAvailable():
+    """Return the Signal K response for navigation.position, or None if there is no position."""
     try:
         resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/value', verify=False)
         testo = resp.text
-        if testo =='null':
-            return False
+        if resp.status_code != 200 or testo =='null':
+            return None
         else:
-            return True
+            return resp
     except:
-        return False
+        return None
 
 def getSignalkVariation():
     try:
@@ -146,11 +166,12 @@ def getDeclination():
     #resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/values/signalk-fixed-position/value', verify=False)
     #DONE Manage exception not null 'position' not available in Signalk data
     #resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/value', verify=False)
-    if SignalkPositionAvailable() :
+    resp = SignalkPositionAvailable()
+    if resp is not None :
         try:
             # manage malformed/unexpected resp content
             #resp = requests.get('http://localhost:3000/signalk/v1/api/vessels/self/navigation/position/value', verify=False)
-            # resp already updated by SignalkPositionAvailable () call
+            # resp returned by the SignalkPositionAvailable () call
             data = ujson.loads(resp.content)
             lat = "{:.4f}".format(data['latitude'])
             lon = "{:.4f}".format(data['longitude'])
@@ -351,13 +372,10 @@ for options in config["imuDevices"]:
     global resp
 
     i2c = busio.I2C(board.SCL, board.SDA)
-    try:
-        addr = scan_for_bno(i2c)
-    except ValueError as e:
-        logger.critical(e)
+    addr = wait_for_bno(i2c, plgCfg.name)
     #
     if addr != plgCfg.name :
-        logger.critical("THE CONFIGURED ADDRESS VALUE '" + hex[plgCfg.name] + "'" +" IS DIFFERENT FROM THE ONE FOUND --> '" + hex[addr] + "'")
+        logger.critical("THE CONFIGURED ADDRESS VALUE '" + (hex(plgCfg.name) if isinstance(plgCfg.name, int) else str(plgCfg.name)) + "'" +" IS DIFFERENT FROM THE ONE FOUND --> '" + hex(addr) + "'")
     package_name = 'sk-py-bno08x'
     my_source_addr_part = 'I2C_at['+hex(addr)+']'
     my_source = package_name + '.' + my_source_addr_part

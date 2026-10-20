@@ -49,15 +49,13 @@ the following steps are required only for the first installation of the plugin.
     
 > <<REMARK
 >        
->If you wish a python virtualenv path different from "/home/pi/.env", 
->please edit the plugin "index.js" accordingly, by simply replacing
->the "/home/pi/.env" string in the line inside the "start" method:
+>The plugin looks for the python virtualenv in "~/.env", i.e. the ".env"
+>folder in the home directory of the user that runs the Signal K server
+>("/home/pi/.env" for the user "pi"). No edit of "index.js" is needed any more.
+>If you wish a different virtualenv path, set the environment variable
+>SK_PY_BNO08X_VENV for the Signal K server (e.g. in its systemd unit):
 >
->       const MY_PYTHON_ENV= "/home/pi/.env"
->
->with the chosen absolute pathname string:
->
->       const MY_PYTHON_ENV= "the chosen virtual env absolute path"
+>       Environment=SK_PY_BNO08X_VENV=/the/chosen/virtual/env/absolute/path
 >
 >and subsequently restarting signalk since incorrect environment
 >should have **blocked plugin start**. By the way, if another
